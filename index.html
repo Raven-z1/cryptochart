@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0e11">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>Binance USDⓈ-M 5m Chart (Android Pro)</title>
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230b0e11'/%3E%3Cpath d='M50 15v10m0 50v10M35 25h30v50H35z' fill='%230ecb81'/%3E%3Crect x='42' y='35' width='16' height='30' rx='2' fill='%23f0b90b'/%3E%3C/svg%3E">
+  <link rel="manifest" href='data:application/manifest+json,{"name":"Binance USD-M 5m Chart","short_name":"5m Chart","start_url":"./index.html","display":"standalone","background_color":"#0b0e11","theme_color":"#0b0e11","orientation":"any"}'>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- TradingView Lightweight Charts with multi-CDN & local fallback -->
+  <script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
+  <script>
+    if (typeof LightweightCharts === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"><\/script>');
+    }
+    if (typeof LightweightCharts === 'undefined') {
+      document.write('<script src="lightweight-charts.standalone.production.js"><\/script>');
+    }
+  </script>
+
+
+  <!-- Modular Stylesheets -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/chart.css">
+  <link rel="stylesheet" href="css/position-tool.css">
+  <link rel="stylesheet" href="css/sheets.css">
+</head>
+<body>
+
+  <div class="app-root">
+    <!-- Top Mobile App Bar -->
+    <header class="app-header">
+      <div class="header-left">
+        <!-- Symbol Trigger (Tap to open Market / Coins Bottom Sheet) -->
+        <div class="symbol-nav-group">
+          <div class="symbol-pill-trigger" id="open-market-btn" title="Select Coin (or type any letter)">
+            <span class="sym-name" id="head-symbol">BTCUSDT</span>
+            <span class="sym-tag cat-tag" id="head-cat-tag">GAINERS</span>
+            <span class="sym-arrow">▼</span>
+          </div>
+        </div>
+
+        <!-- 5m Candle Countdown Pill -->
+        <div class="header-timer" id="open-alert-btn" title="5m Candle Close Timer (Tap for Alert Settings)">
+          <span class="timer-icon">⏱</span>
+          <span class="timer-text" id="candle-timer">05:00</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- WebSocket Status -->
+        <div class="status-badge" id="ws-status">
+          <div class="status-dot"></div>
+          <span id="ws-status-text">5m LIVE</span>
+        </div>
+
+        <!-- Binance API Key Setup -->
+        <button class="icon-touch-btn" id="btn-api-settings" title="Binance API Key Settings">
+          <span>🔑</span>
+        </button>
+
+        <!-- Reset Zoom / Fit Content -->
+        <button class="icon-touch-btn" id="fit-btn" title="Fit Content">
+          <span>⤢</span>
+        </button>
+
+        <!-- Fullscreen / Rotate to Landscape -->
+        <button class="icon-touch-btn" id="rotate-btn" title="Rotate / Fullscreen">
+          <span>⛶</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Compact Real-time Ticker & Stats Ribbon -->
+    <section class="stats-ribbon">
+      <div class="stats-primary">
+        <div class="price-wrap">
+          <div class="live-price" id="live-price">--.--</div>
+          <div class="change-badge bull" id="price-change">+0.00%</div>
+        </div>
+        <!-- 24h Range HUD (Distance to 24h High & Low) -->
+        <div class="range-hud" id="range-hud" title="24h Range Meter (Tap to toggle % / $ distance)">
+          <div class="range-hud-top">
+            <span class="range-hud-low" id="hud-low-dist">L: --</span>
+            <span class="range-hud-badge" id="hud-pos-badge">--%</span>
+            <span class="range-hud-high" id="hud-high-dist">H: --</span>
+          </div>
+          <div class="range-hud-bar">
+            <div class="range-hud-fill" id="hud-fill"></div>
+            <div class="range-hud-pin" id="hud-pin"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-secondary">
+        <div class="stat-col clickable" id="col-24h-high" title="24h High (Tap to toggle format)">
+          <span class="lbl">24h High</span>
+          <span class="val" id="stat-high">--.--</span>
+          <span class="stat-dist dist-bear" id="stat-high-dist">--</span>
+        </div>
+        <div class="stat-col clickable" id="col-24h-low" title="24h Low (Tap to toggle format)">
+          <span class="lbl">24h Low</span>
+          <span class="val" id="stat-low">--.--</span>
+          <span class="stat-dist dist-bull" id="stat-low-dist">--</span>
+        </div>
+        <div class="stat-col">
+          <span class="lbl">24h Vol (USDT)</span>
+          <span class="val" id="stat-turnover">--</span>
+        </div>
+        <div class="stat-col clickable" id="col-24h-range" title="Position in 24h Range">
+          <span class="lbl">24h Range</span>
+          <span class="val" id="stat-range-pos">--</span>
+          <span class="stat-dist" id="stat-range-desc" style="color: var(--text-dim);">--</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chart Viewport -->
+    <main class="chart-viewport">
+      <!-- Header Overlay: Touch Legend + Position Toolbar -->
+      <div class="chart-header-overlay">
+        <!-- Touch Legend Overlay -->
+        <div class="touch-legend" id="touch-legend">
+          <div>O: <span id="leg-open">--</span></div>
+          <div>H: <span id="leg-high">--</span></div>
+          <div>L: <span id="leg-low">--</span></div>
+          <div>C: <span id="leg-close">--</span></div>
+          <div>Chg: <span id="leg-change">--</span></div>
+          <div>V: <span id="leg-vol">--</span></div>
+          <button class="chart-type-pill" id="chart-style-btn" title="Toggle Chart Style (Candles / Heikin-Ashi / Line)">🕯️ Candles</button>
+        </div>
+
+        <!-- TradingView Position Drawing Toolbar -->
+        <div class="chart-pos-toolbar" id="chart-pos-toolbar">
+          <button type="button" class="tv-pos-btn tv-pos-long" id="btn-pos-long" title="Draw Long Position at Current Price">
+            <span class="pos-icon">▲</span>
+            <span class="pos-lbl">Long</span>
+          </button>
+          <button type="button" class="tv-pos-btn tv-pos-short" id="btn-pos-short" title="Draw Short Position at Current Price">
+            <span class="pos-icon">▼</span>
+            <span class="pos-lbl">Short</span>
+          </button>
+          <!-- Active Position HUD -->
+          <div class="pos-hud-active hidden" id="pos-hud-active">
+            <div class="pos-hud-divider"></div>
+            <span class="pos-hud-tag long" id="pos-hud-tag">LONG</span>
+            <div class="pos-hud-stat">
+              <span class="pos-hud-label">R:R</span>
+              <span class="pos-hud-value" id="pos-hud-rr">2.00</span>
+            </div>
+            <div class="pos-hud-presets">
+              <button type="button" class="pos-hud-rr-btn" data-rr="1">1:1</button>
+              <button type="button" class="pos-hud-rr-btn" data-rr="1.5">1:1.5</button>
+              <button type="button" class="pos-hud-rr-btn active" data-rr="2">1:2</button>
+              <button type="button" class="pos-hud-rr-btn" data-rr="3">1:3</button>
+            </div>
+            <button type="button" class="pos-hud-btn pos-hud-trade" id="btn-pos-hud-trade" title="Execute Position on Binance">⚡</button>
+            <button type="button" class="pos-hud-btn" id="btn-pos-edit" title="Edit Position Values">⚙</button>
+            <button type="button" class="pos-hud-btn pos-hud-close" id="btn-pos-close" title="Clear Position">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Watermark -->
+      <div class="chart-watermark" id="chart-watermark">BTCUSDT 5M</div>
+
+      <!-- Canvas for TradingView Lightweight Charts -->
+      <div id="chart-container"></div>
+
+      <!-- Position Drawing SVG Overlay -->
+      <svg id="tv-position-overlay" class="tv-position-overlay">
+        <defs>
+          <clipPath id="pane-clip">
+            <rect id="pane-clip-rect" x="0" y="0" width="100%" height="100%"/>
+          </clipPath>
+        </defs>
+        <g id="tv-pos-group" clip-path="url(#pane-clip)" style="display: none;">
+          <!-- Target / Profit Box -->
+          <rect id="tv-target-box" class="tv-rect tv-rect-target"/>
+          <!-- Stop / Loss Box -->
+          <rect id="tv-stop-box" class="tv-rect tv-rect-stop"/>
+          <!-- Lines -->
+          <line id="tv-tp-line" class="tv-line tv-line-tp"/>
+          <line id="tv-entry-line" class="tv-line tv-line-entry"/>
+          <line id="tv-sl-line" class="tv-line tv-line-sl"/>
+          <line id="tv-left-line" class="tv-border-line"/>
+          <line id="tv-right-line" class="tv-border-line"/>
+
+          <!-- Wide invisible hit-lines for effortless finger grabbing along lines -->
+          <line id="tv-tp-hit" class="tv-line-hit" stroke-width="28" style="cursor: ns-resize;"/>
+          <line id="tv-entry-hit" class="tv-line-hit" stroke-width="24" style="cursor: ns-resize;"/>
+          <line id="tv-sl-hit" class="tv-line-hit" stroke-width="28" style="cursor: ns-resize;"/>
+          <line id="tv-right-hit" class="tv-line-hit" stroke-width="28" style="cursor: ew-resize;"/>
+          <line id="tv-left-hit" class="tv-line-hit" stroke-width="28" style="cursor: move;"/>
+
+          <!-- Drag Handles -->
+          <g id="tv-handle-tp-group" class="tv-handle-group" style="cursor: ns-resize;">
+            <circle class="tv-hit-area" r="24"/>
+            <circle id="tv-handle-tp-circle" class="tv-handle tv-handle-tp" r="6"/>
+          </g>
+          <g id="tv-handle-sl-group" class="tv-handle-group" style="cursor: ns-resize;">
+            <circle class="tv-hit-area" r="24"/>
+            <circle id="tv-handle-sl-circle" class="tv-handle tv-handle-sl" r="6"/>
+          </g>
+          <g id="tv-handle-entry-group" class="tv-handle-group" style="cursor: ns-resize;">
+            <circle class="tv-hit-area" r="24"/>
+            <circle id="tv-handle-entry-circle" class="tv-handle tv-handle-entry" r="6"/>
+          </g>
+          <g id="tv-handle-width-group" class="tv-handle-group" style="cursor: ew-resize;">
+            <circle class="tv-hit-area" r="24"/>
+            <circle id="tv-handle-width-circle" class="tv-handle tv-handle-width" r="6"/>
+          </g>
+
+          <!-- Target Info Badge (Outside Box) -->
+          <g id="tv-info-target" class="tv-info-group">
+            <rect id="tv-bg-target" class="tv-info-bg tv-info-bg-tp" rx="4"/>
+            <text id="tv-txt-target-stats" class="tv-info-txt tv-txt-tp-badge">TP: $0.00 (+0.00%)</text>
+          </g>
+
+          <!-- Stop Info Badge (Outside Box) -->
+          <g id="tv-info-stop" class="tv-info-group">
+            <rect id="tv-bg-stop" class="tv-info-bg tv-info-bg-sl" rx="4"/>
+            <text id="tv-txt-stop-stats" class="tv-info-txt tv-txt-sl-badge">SL: $0.00 (-0.00%)</text>
+          </g>
+
+          <!-- Middle R:R Ratio Badge -->
+          <g id="tv-info-rr" class="tv-info-group">
+            <rect id="tv-bg-rr" class="tv-info-bg tv-info-bg-rr" rx="4"/>
+            <text id="tv-txt-rr-label" class="tv-info-txt tv-txt-rr-badge">R:R 2.00</text>
+          </g>
+
+          <!-- Entry Info Card -->
+          <g id="tv-info-entry" class="tv-info-group">
+            <rect id="tv-bg-entry" class="tv-info-bg tv-info-bg-entry" rx="3"/>
+            <text id="tv-txt-entry-label" class="tv-info-txt tv-txt-entry">Open: $0.00</text>
+          </g>
+        </g>
+      </svg>
+
+      <!-- Loader Overlay -->
+      <div class="loader-overlay" id="chart-loader">
+        <div class="android-spinner"></div>
+      </div>
+    </main>
+
+    <!-- Android Bottom Thumb Dock -->
+    <nav class="bottom-dock">
+      <!-- Bottom Quick Actions for Android -->
+      <div class="dock-actions">
+        <!-- Previous Chart Navigation (Left Edge) -->
+        <button class="dock-btn dock-nav-btn" id="prev-chart-btn" title="Previous Chart [Left Arrow / Swipe Right]">
+          <svg viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Prev</span>
+        </button>
+
+        <!-- Market Coins Bottom Sheet -->
+        <button class="dock-btn" id="dock-market-btn">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>Pair</span>
+        </button>
+
+        <!-- Current Timeframe Trigger (Tap to slide in multiple timeframes sheet) -->
+        <button class="dock-btn dock-tf-btn active" id="dock-tf-btn" title="Select Timeframe">
+          <div class="dock-icon-wrap">
+            <span class="dock-tf-badge" id="dock-tf-badge">5m</span>
+          </div>
+          <span id="dock-tf-label">5m ▾</span>
+        </button>
+
+        <!-- Technical Indicators Bottom Sheet -->
+        <button class="dock-btn" id="dock-indicators-btn">
+          <svg viewBox="0 0 24 24"><path d="M12 20V10M18 20V4M6 20v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>Indicators</span>
+        </button>
+
+        <!-- Candle Close Alert Settings -->
+        <button class="dock-btn" id="dock-alert-btn">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          <span id="alert-dock-text">Alert</span>
+        </button>
+
+        <!-- Current Opened Positions & Total Balance -->
+        <button class="dock-btn" id="dock-positions-btn" title="View Open Positions & Total Balance">
+          <div class="dock-icon-wrap">
+            <svg class="stroke-icon" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M7 11h0M7 7h0M11 15h6M11 11h6M11 7h6"/></svg>
+            <span class="dock-pos-badge hidden" id="dock-pos-badge">0</span>
+          </div>
+          <span id="dock-pos-label">Positions</span>
+        </button>
+
+        <!-- Next Chart Navigation (Right Edge) -->
+        <button class="dock-btn dock-nav-btn" id="next-chart-btn" title="Next Chart [Right Arrow / Swipe Left]">
+          <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Next</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Market / Pair Selector Bottom Sheet -->
+  <div class="sheet-backdrop" id="market-sheet-backdrop">
+    <div class="bottom-sheet" id="market-sheet">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <span class="sheet-title">Select or Enter Pair</span>
+        <button class="sheet-close-btn" id="market-sheet-close">&times;</button>
+      </div>
+      <div class="sheet-search-wrap">
+        <!-- Direct Pair Input Form with GO Button -->
+        <form class="pair-input-container" id="pair-input-form" onsubmit="event.preventDefault();">
+          <input type="text" class="sheet-search-input" id="coin-search-input" placeholder="ENTER PAIR (E.G. BTC, ETH, SOL)..." autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <button type="submit" class="pair-go-btn" id="pair-go-btn">GO</button>
+        </form>
+      </div>
+      <div class="sheet-filter-tabs">
+        <button class="sheet-tab-btn active" data-filter="gainers">🚀 Gainers</button>
+        <button class="sheet-tab-btn" data-filter="volume">🔥 Volume</button>
+        <button class="sheet-tab-btn" data-filter="losers">📉 Losers</button>
+        <button class="sheet-tab-btn" data-filter="watchlist">⭐ Watchlist</button>
+      </div>
+      <div class="sheet-coin-list" id="sheet-coin-list">
+        <!-- Dynamically rendered coin rows -->
+      </div>
+    </div>
+  </div>
+
+  <!-- TradingView Position Settings Bottom Sheet -->
+  <div class="sheet-backdrop" id="pos-sheet-backdrop">
+    <div class="bottom-sheet" id="pos-sheet">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <span class="sheet-title" id="pos-sheet-title">Position Settings</span>
+        <button class="sheet-close-btn" id="pos-sheet-close">&times;</button>
+      </div>
+      <div class="pos-sheet-body">
+        <div class="pos-type-toggle-row">
+          <button type="button" class="pos-type-pill active pos-type-long" id="pos-pill-long">▲ LONG</button>
+          <button type="button" class="pos-type-pill pos-type-short" id="pos-pill-short">▼ SHORT</button>
+        </div>
+
+        <div class="pos-input-grid">
+          <div class="pos-input-group" style="grid-column: span 2;">
+            <label for="pos-in-entry">Entry Price ($)</label>
+            <input type="number" step="any" id="pos-in-entry" class="pos-num-input" placeholder="Entry Price">
+          </div>
+
+          <div class="pos-input-group">
+            <label for="pos-in-tp" style="color: var(--color-bull);">Take Profit ($)</label>
+            <input type="number" step="any" id="pos-in-tp" class="pos-num-input input-bull" placeholder="TP Price">
+          </div>
+
+          <div class="pos-input-group">
+            <label for="pos-in-tppct" style="color: var(--color-bull);">TP Profit %</label>
+            <input type="number" step="0.01" id="pos-in-tppct" class="pos-num-input input-bull" placeholder="TP %">
+          </div>
+
+          <div class="pos-input-group">
+            <label for="pos-in-sl" style="color: var(--color-bear);">Stop Loss ($)</label>
+            <input type="number" step="any" id="pos-in-sl" class="pos-num-input input-bear" placeholder="SL Price">
+          </div>
+
+          <div class="pos-input-group">
+            <label for="pos-in-slpct" style="color: var(--color-bear);">SL Loss %</label>
+            <input type="number" step="0.01" id="pos-in-slpct" class="pos-num-input input-bear" placeholder="SL %">
+          </div>
+
+          <div class="pos-input-group" style="grid-column: span 2;">
+            <label style="color: var(--binance-gold);">Risk / Reward Ratio</label>
+            <div class="pos-rr-display" id="pos-sheet-rr">2.00</div>
+          </div>
+        </div>
+
+        <div class="pos-presets-row">
+          <span class="pos-presets-label">R:R Presets:</span>
+          <button type="button" class="pos-sheet-preset" data-rr="1">1:1</button>
+          <button type="button" class="pos-sheet-preset" data-rr="1.5">1:1.5</button>
+          <button type="button" class="pos-sheet-preset" data-rr="2">1:2</button>
+          <button type="button" class="pos-sheet-preset" data-rr="2.5">1:2.5</button>
+          <button type="button" class="pos-sheet-preset" data-rr="3">1:3</button>
+          <button type="button" class="pos-sheet-preset" data-rr="4">1:4</button>
+        </div>
+
+        <!-- Exchange Execution Action Bar -->
+        <div class="pos-exchange-row">
+          <button type="button" class="pos-btn-exchange" id="btn-pos-exchange">
+            <span class="pos-exchange-icon">⚡</span>
+            <span class="pos-exchange-title">Open Position on Exchange</span>
+            <span class="pos-exchange-tag" id="pos-exchange-env-tag">Binance USDⓈ-M</span>
+          </button>
+          <button type="button" class="pos-btn-api-cfg" id="btn-pos-api-cfg" title="Binance API Settings">
+            🔑 API
+          </button>
+        </div>
+
+        <div class="pos-sheet-actions">
+          <button type="button" class="pos-btn-cancel" id="pos-sheet-cancel">Cancel</button>
+          <button type="button" class="pos-btn-danger" id="pos-sheet-delete">Delete Position</button>
+          <button type="button" class="pos-btn-apply" id="pos-sheet-apply">Apply Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Confirmation Bottom Sheet -->
+  <div class="sheet-backdrop" id="pos-confirm-backdrop">
+    <div class="bottom-sheet" id="pos-confirm-sheet">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <span class="sheet-title" id="pos-confirm-title">Confirm Binance Position</span>
+        <button class="sheet-close-btn" id="pos-confirm-close">&times;</button>
+      </div>
+      <div class="pos-confirm-body" id="pos-confirm-body">
+        <!-- Environment Banner & Margin Mode Tag -->
+        <div class="confirm-env-badge" id="confirm-env-badge">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span class="env-dot live"></span>
+            <span id="confirm-env-text">Binance USDⓈ-M Futures (Live)</span>
+          </div>
+          <span class="confirm-margin-mode-tag" id="confirm-margin-mode-tag">CROSS MARGIN</span>
+        </div>
+
+        <!-- Position Summary Card -->
+        <div class="confirm-summary-card">
+          <div class="confirm-summary-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="confirm-type-tag" id="confirm-type-tag">LONG</span>
+              <span class="confirm-sym" id="confirm-sym">BTCUSDT</span>
+            </div>
+            <span class="confirm-curr-price" id="confirm-curr-price">Market: $--.--</span>
+          </div>
+
+          <!-- Order Type Selector -->
+          <div class="confirm-field-group">
+            <div class="confirm-field-header">
+              <label class="confirm-field-lbl">Order Type</label>
+            </div>
+            <div class="confirm-toggle-group">
+              <button type="button" class="confirm-type-btn active" id="btn-ordertype-market">MARKET</button>
+              <button type="button" class="confirm-type-btn" id="btn-ordertype-limit">LIMIT</button>
+            </div>
+          </div>
+
+          <!-- Limit Price (Visible only when LIMIT selected) -->
+          <div class="confirm-field-group hidden" id="confirm-limit-price-group">
+            <div class="confirm-field-header">
+              <label class="confirm-field-lbl">Limit Price ($)</label>
+            </div>
+            <input type="number" step="any" class="pos-num-input" id="confirm-limit-price" placeholder="Limit Price">
+          </div>
+
+          <!-- Risk Sizing Control (Stop Loss Risk % of Balance) -->
+          <div class="confirm-field-group">
+            <div class="confirm-field-header">
+              <label class="confirm-field-lbl">Risk Sizing (% of Balance)</label>
+              <span class="confirm-risk-subtext" id="confirm-risk-subtext">Risk 5%: $--.--</span>
+            </div>
+            <div class="confirm-risk-chips">
+              <button type="button" class="confirm-risk-btn" data-risk="1">1%</button>
+              <button type="button" class="confirm-risk-btn" data-risk="2">2%</button>
+              <button type="button" class="confirm-risk-btn" data-risk="3">3%</button>
+              <button type="button" class="confirm-risk-btn active" data-risk="5">5% (Default)</button>
+              <button type="button" class="confirm-risk-btn" data-risk="10">10%</button>
+            </div>
+          </div>
+
+          <!-- Position Size / Margin Input -->
+          <div class="confirm-field-group">
+            <div class="confirm-field-header">
+              <label class="confirm-field-lbl">Position Size (USDT)</label>
+              <span class="confirm-avail-bal" id="confirm-avail-bal">Avail: $--.--</span>
+            </div>
+            <div class="confirm-size-input-wrap">
+              <span class="size-prefix">$</span>
+              <input type="number" step="any" class="pos-num-input size-input" id="confirm-size-usdt" placeholder="e.g. 50">
+              <span class="size-equiv" id="confirm-size-equiv">≈ 0.000 QTY</span>
+            </div>
+            <div class="confirm-size-subline">
+              <span class="confirm-margin-cost-lbl" id="confirm-margin-cost-lbl">Margin Cost: $0.00 USDT</span>
+              <span class="confirm-sl-dist-lbl" id="confirm-sl-dist-lbl">SL Dist: 0.0%</span>
+            </div>
+            <!-- Quick Chips for Manual Size -->
+            <div class="confirm-quick-chips">
+              <span class="quick-chip-lbl">Fixed:</span>
+              <button type="button" class="confirm-chip chip-val" data-val="25">$25</button>
+              <button type="button" class="confirm-chip chip-val" data-val="50">$50</button>
+              <button type="button" class="confirm-chip chip-val" data-val="100">$100</button>
+              <button type="button" class="confirm-chip chip-val" data-val="250">$250</button>
+              <button type="button" class="confirm-chip chip-val" data-val="500">$500</button>
+            </div>
+          </div>
+
+          <!-- Leverage Row -->
+          <div class="confirm-field-group">
+            <div class="confirm-field-header">
+              <label class="confirm-field-lbl">Leverage (Cross)</label>
+              <span class="confirm-leverage-val" id="confirm-leverage-val">10x</span>
+            </div>
+            <div class="confirm-leverage-chips">
+              <button type="button" class="confirm-lev-btn" data-lev="5">5x</button>
+              <button type="button" class="confirm-lev-btn active" data-lev="10">10x</button>
+              <button type="button" class="confirm-lev-btn" data-lev="20">20x</button>
+              <button type="button" class="confirm-lev-btn" data-lev="50">50x</button>
+            </div>
+          </div>
+
+          <!-- Plan Breakdown Grid -->
+          <div class="confirm-plan-grid">
+            <div class="plan-item">
+              <span class="plan-lbl">Entry Price</span>
+              <span class="plan-val" id="confirm-plan-entry">$--.--</span>
+            </div>
+            <div class="plan-item">
+              <span class="plan-lbl" style="color: var(--color-bull);">Take Profit (TP)</span>
+              <span class="plan-val bull" id="confirm-plan-tp">$--.--</span>
+            </div>
+            <div class="plan-item">
+              <span class="plan-lbl" style="color: var(--color-bear);">Stop Loss (SL)</span>
+              <span class="plan-val bear" id="confirm-plan-sl">$--.--</span>
+            </div>
+            <div class="plan-item">
+              <span class="plan-lbl" style="color: var(--binance-gold);">R:R Ratio</span>
+              <span class="plan-val gold" id="confirm-plan-rr">2.00</span>
+            </div>
+            <div class="plan-item">
+              <span class="plan-lbl">Position Size</span>
+              <span class="plan-val" id="confirm-plan-notional">$0.00</span>
+            </div>
+            <div class="plan-item">
+              <span class="plan-lbl">Margin Req.</span>
+              <span class="plan-val" id="confirm-plan-margin">$0.00</span>
+            </div>
+            <div class="plan-item">
+              <span class="plan-lbl">Est. Profit (TP)</span>
+              <span class="plan-val bull" id="confirm-est-profit">+$0.00</span>
+            </div>
+            <div class="plan-item">
+              <span class="plan-lbl">Est. Risk (SL)</span>
+              <span class="plan-val bear" id="confirm-est-loss">-$0.00</span>
+            </div>
+            <div class="plan-item">
+              <span class="plan-lbl">Exchange TP/SL</span>
+              <span class="plan-val gold" style="font-size: 10px;">Native Bracket</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error / Warning Banner -->
+        <div class="confirm-error-banner hidden" id="confirm-error-banner"></div>
+      </div>
+
+      <!-- Action Buttons (Pinned Footer: Always visible on mobile) -->
+      <div class="pos-confirm-actions">
+        <button type="button" class="pos-btn-cancel" id="btn-confirm-cancel">Cancel</button>
+        <button type="button" class="pos-btn-submit" id="btn-confirm-submit">
+          <span class="submit-spinner hidden" id="submit-spinner"></span>
+          <span id="btn-confirm-submit-text">Confirm & Enter Position</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Binance Open Positions & Account Balance Bottom Sheet -->
+  <div class="sheet-backdrop" id="pos-list-backdrop">
+    <div class="bottom-sheet" id="pos-list-sheet">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <div class="pos-list-head-left">
+          <span class="sheet-title">Binance Positions</span>
+          <span class="pos-env-tag live" id="pos-list-env-tag">LIVE</span>
+        </div>
+        <div class="pos-list-head-right">
+          <button type="button" class="pos-icon-btn" id="btn-refresh-positions" title="Refresh Positions & Balance">🔄</button>
+          <button type="button" class="sheet-close-btn" id="pos-list-close">&times;</button>
+        </div>
+      </div>
+
+      <div class="pos-list-body">
+        <!-- Total Balance Overview Card -->
+        <div class="account-balance-card" id="account-balance-card">
+          <div class="bal-card-row primary">
+            <div class="bal-col">
+              <span class="bal-lbl">Total Wallet Balance</span>
+              <div class="bal-val-wrap">
+                <span class="bal-val" id="bal-total-wallet">$0.00</span>
+                <span class="bal-unit">USDT</span>
+              </div>
+            </div>
+            <div class="bal-col right">
+              <span class="bal-lbl">Total Unrealized PnL</span>
+              <span class="bal-val bal-pnl-val" id="bal-unrealized-pnl">$0.00</span>
+            </div>
+          </div>
+          <div class="bal-card-divider"></div>
+          <div class="bal-card-row secondary">
+            <div class="bal-mini-stat">
+              <span class="bal-sub-lbl">Margin Balance:</span>
+              <span class="bal-sub-val" id="bal-margin-total">$0.00</span>
+            </div>
+            <div class="bal-mini-stat">
+              <span class="bal-sub-lbl">Available Margin:</span>
+              <span class="bal-sub-val highlight" id="bal-available">$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Title with Counter -->
+        <div class="pos-section-header">
+          <span class="pos-sec-title">Active Positions</span>
+          <span class="pos-sec-count" id="pos-sec-count">0 Open</span>
+        </div>
+
+        <!-- Open Positions List Container -->
+        <div class="open-positions-container" id="open-positions-container">
+          <div class="pos-empty-state">
+            <div class="android-spinner" style="width: 24px; height: 24px; margin: 20px auto;"></div>
+            <span>Loading Binance positions & balance...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Binance API Key Setup Modal -->
+  <div class="sheet-backdrop" id="api-sheet-backdrop">
+    <div class="bottom-sheet" id="api-sheet">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <span class="sheet-title">Binance API Configuration</span>
+        <button class="sheet-close-btn" id="api-sheet-close">&times;</button>
+      </div>
+      <div class="api-sheet-body">
+        <div class="api-security-notice">
+          <span class="security-icon">🔒</span>
+          <span>Your API Key & Secret are stored <strong>strictly locally</strong> in your browser storage. They are never sent anywhere except directly to Binance over TLS.</span>
+        </div>
+
+        <!-- Environment Selector -->
+        <div class="api-input-group">
+          <label class="confirm-field-lbl">Trading Environment:</label>
+          <div class="confirm-toggle-group">
+            <button type="button" class="api-env-btn active" data-env="live" id="btn-env-live">🟢 Live USDⓈ-M</button>
+            <button type="button" class="api-env-btn" data-env="testnet" id="btn-env-testnet">🟡 Testnet (Demo)</button>
+          </div>
+          <span class="api-input-hint" id="api-env-hint">Connected to https://fapi.binance.com</span>
+        </div>
+
+        <!-- API Key Input -->
+        <div class="api-input-group">
+          <label for="api-key-input" class="confirm-field-lbl">Binance API Key:</label>
+          <div class="api-input-wrap">
+            <input type="password" id="api-key-input" class="api-text-input" placeholder="Paste your Binance API Key..." autocomplete="off">
+            <button type="button" class="api-toggle-vis" id="btn-toggle-key-vis" title="Toggle visibility">👁</button>
+          </div>
+        </div>
+
+        <!-- API Secret Input -->
+        <div class="api-input-group">
+          <label for="api-secret-input" class="confirm-field-lbl">Binance Secret Key:</label>
+          <div class="api-input-wrap">
+            <input type="password" id="api-secret-input" class="api-text-input" placeholder="Paste your Binance Secret Key..." autocomplete="off">
+            <button type="button" class="api-toggle-vis" id="btn-toggle-sec-vis" title="Toggle visibility">👁</button>
+          </div>
+          <span class="api-input-hint">Requires: <strong>Enable Futures</strong> permission in Binance API Management.</span>
+        </div>
+
+        <!-- Optional CORS Proxy Setting -->
+        <div class="api-input-group">
+          <label for="api-proxy-input" class="confirm-field-lbl">API Proxy URL (Optional):</label>
+          <input type="text" id="api-proxy-input" class="api-text-input" placeholder="Leave empty for direct connection">
+          <span class="api-input-hint">Direct connection is default. Only specify if using a custom backend proxy.</span>
+        </div>
+
+        <!-- Connection Test Result Badge -->
+        <div class="api-test-result hidden" id="api-test-result"></div>
+
+        <!-- API Modal Actions -->
+        <div class="api-sheet-actions">
+          <button type="button" class="pos-btn-cancel" id="btn-api-clear" style="color: var(--color-bear);">Disconnect</button>
+          <button type="button" class="pos-sheet-preset" id="btn-api-test" style="height: 40px; padding: 0 14px; font-size: 12px;">Test Connection</button>
+          <button type="button" class="pos-btn-apply" id="btn-api-save">Save API Keys</button>
+        </div>
+      </div>
+    </div>
+  <!-- Timeframe Selection Bottom Sheet (Slide-in from bottom) -->
+  <div class="sheet-backdrop" id="tf-sheet-backdrop">
+    <div class="bottom-sheet tf-bottom-sheet" id="tf-sheet">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <div class="tf-sheet-header-left">
+          <span class="sheet-title">Timeframe</span>
+          <span class="tf-current-badge" id="tf-sheet-current-badge">Current: 5m</span>
+        </div>
+        <button class="sheet-close-btn" id="tf-sheet-close">&times;</button>
+      </div>
+      <div class="tf-sheet-body" id="tf-sheet-body">
+        <!-- Minutes Section -->
+        <div>
+          <div class="tf-section-title">MINUTES</div>
+          <div class="tf-grid">
+            <div class="tf-card" data-interval="1m">
+              <span class="tf-val">1m</span>
+              <span class="tf-desc">1 Minute</span>
+            </div>
+            <div class="tf-card" data-interval="3m">
+              <span class="tf-val">3m</span>
+              <span class="tf-desc">3 Minutes</span>
+            </div>
+            <div class="tf-card" data-interval="5m">
+              <span class="tf-val">5m</span>
+              <span class="tf-desc">5 Minutes</span>
+              <span class="tf-tag">DEFAULT</span>
+            </div>
+            <div class="tf-card" data-interval="15m">
+              <span class="tf-val">15m</span>
+              <span class="tf-desc">15 Minutes</span>
+            </div>
+            <div class="tf-card" data-interval="30m">
+              <span class="tf-val">30m</span>
+              <span class="tf-desc">30 Minutes</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hours Section -->
+        <div>
+          <div class="tf-section-title">HOURS</div>
+          <div class="tf-grid">
+            <div class="tf-card" data-interval="1h">
+              <span class="tf-val">1h</span>
+              <span class="tf-desc">1 Hour</span>
+            </div>
+            <div class="tf-card" data-interval="2h">
+              <span class="tf-val">2h</span>
+              <span class="tf-desc">2 Hours</span>
+            </div>
+            <div class="tf-card" data-interval="4h">
+              <span class="tf-val">4h</span>
+              <span class="tf-desc">4 Hours</span>
+            </div>
+            <div class="tf-card" data-interval="6h">
+              <span class="tf-val">6h</span>
+              <span class="tf-desc">6 Hours</span>
+            </div>
+            <div class="tf-card" data-interval="8h">
+              <span class="tf-val">8h</span>
+              <span class="tf-desc">8 Hours</span>
+            </div>
+            <div class="tf-card" data-interval="12h">
+              <span class="tf-val">12h</span>
+              <span class="tf-desc">12 Hours</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Days & Weeks Section -->
+        <div>
+          <div class="tf-section-title">DAYS &amp; WEEKS</div>
+          <div class="tf-grid">
+            <div class="tf-card" data-interval="1d">
+              <span class="tf-val">1d</span>
+              <span class="tf-desc">1 Day</span>
+            </div>
+            <div class="tf-card" data-interval="3d">
+              <span class="tf-val">3d</span>
+              <span class="tf-desc">3 Days</span>
+            </div>
+            <div class="tf-card" data-interval="1w">
+              <span class="tf-val">1w</span>
+              <span class="tf-desc">1 Week</span>
+            </div>
+            <div class="tf-card" data-interval="1M">
+              <span class="tf-val">1M</span>
+              <span class="tf-desc">1 Month</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicators Bottom Sheet -->
+  <div class="sheet-backdrop" id="ind-sheet-backdrop">
+    <div class="bottom-sheet" id="ind-sheet">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <span class="sheet-title">Chart Indicators</span>
+        <button class="sheet-close-btn" id="ind-sheet-close">&times;</button>
+      </div>
+      <div class="sheet-items-group">
+        <!-- 24h High / Low Lines -->
+        <div class="indicator-row" onclick="document.getElementById('tog-high-low').click()">
+          <div class="ind-label-wrap">
+            <div class="ind-color-badge" style="background: linear-gradient(135deg, var(--color-bear), var(--color-bull));"></div>
+            <div>
+              <div class="ind-name">24h High & Low Lines</div>
+              <div class="ind-desc">Target price levels on chart</div>
+            </div>
+          </div>
+          <label class="switch" onclick="event.stopPropagation()">
+            <input type="checkbox" id="tog-high-low" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Bollinger Bands -->
+        <div class="indicator-row" onclick="document.getElementById('tog-bb').click()">
+          <div class="ind-label-wrap">
+            <div class="ind-color-badge" style="background: var(--color-bb);"></div>
+            <div>
+              <div class="ind-name">Bollinger Bands (20, 2)</div>
+              <div class="ind-desc">Volatility & Bands</div>
+            </div>
+          </div>
+          <label class="switch" onclick="event.stopPropagation()">
+            <input type="checkbox" id="tog-bb">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Volume -->
+        <div class="indicator-row" onclick="document.getElementById('tog-vol').click()">
+          <div class="ind-label-wrap">
+            <div class="ind-color-badge" style="background: var(--color-bull);"></div>
+            <div>
+              <div class="ind-name">Volume Bars</div>
+              <div class="ind-desc">Color-coded histogram</div>
+            </div>
+          </div>
+          <label class="switch" onclick="event.stopPropagation()">
+            <input type="checkbox" id="tog-vol" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Heikin Ashi -->
+        <div class="indicator-row" onclick="document.getElementById('tog-ha').click()">
+          <div class="ind-label-wrap">
+            <div class="ind-color-badge" style="background: #fff;"></div>
+            <div>
+              <div class="ind-name">Heikin-Ashi Smoothing</div>
+              <div class="ind-desc">Trend-smoothed candles</div>
+            </div>
+          </div>
+          <label class="switch" onclick="event.stopPropagation()">
+            <input type="checkbox" id="tog-ha">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Candle Alert & Android Haptics Bottom Sheet -->
+  <div class="sheet-backdrop" id="alert-sheet-backdrop">
+    <div class="bottom-sheet" id="alert-sheet">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <span class="sheet-title">5m Candle Alerts (Android)</span>
+        <button class="sheet-close-btn" id="alert-sheet-close">&times;</button>
+      </div>
+      <div class="sheet-items-group">
+        <!-- Vibrate Alert -->
+        <div class="indicator-row" onclick="document.getElementById('tog-vibrate').click()">
+          <div class="ind-label-wrap">
+            <span style="font-size: 20px;">📳</span>
+            <div>
+              <div class="ind-name">Haptic Vibration</div>
+              <div class="ind-desc">Vibrate Android phone on 5m candle close</div>
+            </div>
+          </div>
+          <label class="switch" onclick="event.stopPropagation()">
+            <input type="checkbox" id="tog-vibrate" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Sound Chime -->
+        <div class="indicator-row" onclick="document.getElementById('tog-sound').click()">
+          <div class="ind-label-wrap">
+            <span style="font-size: 20px;">🔔</span>
+            <div>
+              <div class="ind-name">Audio Chime</div>
+              <div class="ind-desc">Play soft sound chime on 5m candle close</div>
+            </div>
+          </div>
+          <label class="switch" onclick="event.stopPropagation()">
+            <input type="checkbox" id="tog-sound" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Urgency 10s Flash -->
+        <div class="indicator-row" onclick="document.getElementById('tog-urgency').click()">
+          <div class="ind-label-wrap">
+            <span style="font-size: 20px;">⚡</span>
+            <div>
+              <div class="ind-name">10s Urgency Warning</div>
+              <div class="ind-desc">Flash countdown red when &lt; 15 seconds left</div>
+            </div>
+          </div>
+          <label class="switch" onclick="event.stopPropagation()">
+            <input type="checkbox" id="tog-urgency" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Android Native Toast Notification -->
+  <div class="android-toast" id="android-toast">Ready</div>
+
+
+  <!-- Application Logic Modules -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/position-tool.js"></script>
+  <script src="js/binance-api.js"></script>
+  <script src="js/positions-manager.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

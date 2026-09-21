@@ -1,0 +1,19 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.tmp
+
+# Logs
+*.log
+npm-debug.log*
+
+# Node / dependencies (if added later)
+node_modules/
+.npm/
+
+# Netlify dev cache
+.netlify/
+.l2s.*

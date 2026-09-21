@@ -1,0 +1,753 @@
+/* ==========================================================================
+   Base Styles, Layout, Header, Ribbon, Dock, and Responsive Pro Mode
+   ========================================================================== */
+
+:root {
+  --bg-base: #0b0e11;
+  --bg-surface: #181a20;
+  --bg-card: #1e2329;
+  --bg-subtle: #2b313a;
+  --bg-active: #363d47;
+  --border-color: #23272e;
+  --border-light: #2b313a;
+  --text-main: #eaecef;
+  --text-muted: #848e9c;
+  --text-dim: #5e6673;
+  --binance-gold: #f0b90b;
+  --binance-gold-hover: #fcd535;
+  --color-bull: #0ecb81;
+  --color-bull-bg: rgba(14, 203, 129, 0.15);
+  --color-bear: #f6465d;
+  --color-bear-bg: rgba(246, 70, 93, 0.15);
+  --color-bb: #38bdf8;
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background-color: var(--bg-base);
+  color: var(--text-main);
+  font-family: var(--font-ui);
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+}
+
+.app-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  position: relative;
+}
+
+/* Top App Bar */
+.app-header {
+  height: 50px;
+  min-height: 50px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  z-index: 30;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.symbol-pill-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.symbol-pill-trigger:active {
+  transform: scale(0.96);
+  background: var(--bg-subtle);
+}
+
+.symbol-pill-trigger .sym-name {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.2px;
+}
+
+.symbol-pill-trigger .sym-tag {
+  font-size: 9px;
+  font-weight: 700;
+  background: rgba(240, 185, 11, 0.2);
+  color: var(--binance-gold);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.symbol-pill-trigger .sym-arrow {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+/* 5m Candle Countdown in Header */
+.header-timer {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(240, 185, 11, 0.12);
+  border: 1px solid rgba(240, 185, 11, 0.35);
+  border-radius: 16px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.header-timer:active {
+  transform: scale(0.96);
+}
+
+.timer-icon {
+  font-size: 11px;
+}
+
+.timer-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--binance-gold);
+  min-width: 40px;
+  text-align: center;
+}
+
+.timer-text.urgent {
+  color: var(--color-bear);
+  animation: pulse-urgent 1s infinite;
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-touch-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.icon-touch-btn:active {
+  transform: scale(0.92);
+  background: var(--bg-subtle);
+}
+
+.icon-touch-btn.active {
+  background: rgba(240, 185, 11, 0.2);
+  border-color: var(--binance-gold);
+  color: var(--binance-gold);
+}
+
+/* Live WS Status Indicator */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(14, 203, 129, 0.12);
+  border: 1px solid rgba(14, 203, 129, 0.3);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-bull);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-bull);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { box-shadow: 0 0 0 0 rgba(14, 203, 129, 0.7); }
+  70% { box-shadow: 0 0 0 5px rgba(14, 203, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(14, 203, 129, 0); }
+}
+
+/* Real-Time Price & Stats Ribbon (Optimized for Android Screens) */
+.stats-ribbon {
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.stats-primary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.live-price {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-main);
+  padding: 1px 4px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.3s;
+}
+
+.live-price.flash-up {
+  background: var(--color-bull-bg);
+  color: var(--color-bull);
+}
+
+.live-price.flash-down {
+  background: var(--color-bear-bg);
+  color: var(--color-bear);
+}
+
+.change-badge {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.change-badge.bull {
+  color: var(--color-bull);
+  background: var(--color-bull-bg);
+}
+
+.change-badge.bear {
+  color: var(--color-bear);
+  background: var(--color-bear-bg);
+}
+
+/* 24h Range HUD (Distance to 24h High & Low) */
+.range-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 125px;
+  max-width: 175px;
+  flex: 1;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.range-hud:active {
+  transform: scale(0.98);
+  background: var(--bg-subtle);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.range-hud-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.range-hud-low {
+  color: var(--color-bull);
+  white-space: nowrap;
+}
+
+.range-hud-high {
+  color: var(--color-bear);
+  white-space: nowrap;
+}
+
+.range-hud-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--bg-base);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  letter-spacing: -0.2px;
+}
+
+.range-hud-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  position: relative;
+}
+
+.range-hud-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--color-bull), var(--binance-gold));
+  width: 50%;
+  transition: width 0.25s ease-out;
+}
+
+.range-hud-pin {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid var(--bg-base);
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.9);
+  transform: translate(-50%, -50%);
+  left: 50%;
+  transition: left 0.25s ease-out;
+  z-index: 2;
+}
+
+/* 24h Stats Mini Grid */
+.stats-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow-x: auto;
+  gap: 12px;
+  padding-bottom: 2px;
+}
+
+.stat-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  white-space: nowrap;
+}
+
+.stat-col.clickable {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.stat-col.clickable:active {
+  opacity: 0.7;
+}
+
+.stat-col .lbl {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.stat-col .val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.stat-dist {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.stat-dist.dist-bear {
+  color: var(--color-bear);
+}
+
+.stat-dist.dist-bull {
+  color: var(--color-bull);
+}
+
+
+/* Mobile Bottom Dock (Thumb Zone for Android) */
+.bottom-dock {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 30;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* Timeframe Trigger Badge in Dock */
+.dock-tf-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  background: rgba(240, 185, 11, 0.16);
+  border: 1px solid var(--binance-gold);
+  color: var(--binance-gold);
+  border-radius: 5px;
+  padding: 1px 5px;
+  line-height: 14px;
+  letter-spacing: 0.2px;
+  box-shadow: 0 0 8px rgba(240, 185, 11, 0.25);
+  transition: all 0.15s;
+}
+.dock-btn:active .dock-tf-badge {
+  transform: scale(0.92);
+}
+.dock-btn.active .dock-tf-badge {
+  background: var(--binance-gold);
+  color: #0b0e11;
+  font-weight: 900;
+}
+
+
+/* Bottom Action Buttons (Large Touch Targets 44px) */
+.dock-actions {
+  display: grid;
+  grid-template-columns: 0.85fr 1fr 1.15fr 1fr 0.95fr 1fr 0.85fr;
+  gap: 2px;
+  padding: 4px 3px calc(4px + env(safe-area-inset-bottom, 0px)) 3px;
+}
+
+.dock-btn {
+  height: 44px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dock-btn:active {
+  background: var(--bg-card);
+  transform: scale(0.94);
+  color: var(--text-main);
+}
+
+.dock-btn.active {
+  color: var(--binance-gold);
+}
+
+.dock-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.dock-btn span {
+  font-size: 9.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+
+/* Left & Right Chart Navigation Buttons on the Bottom Nav Bar Edges */
+.dock-btn.dock-nav-btn {
+  color: var(--binance-gold);
+  background: rgba(240, 185, 11, 0.08);
+  border: 1px solid rgba(240, 185, 11, 0.22);
+}
+
+.dock-btn.dock-nav-btn:active {
+  background: rgba(240, 185, 11, 0.28);
+  border-color: var(--binance-gold);
+  transform: scale(0.92);
+  color: #fff;
+}
+
+.dock-btn.dock-nav-btn svg {
+  fill: none;
+  stroke: currentColor;
+  width: 18px;
+  height: 18px;
+}
+
+.dock-btn.dock-nav-btn:active svg {
+  stroke: #fff;
+}
+
+.dock-btn.dock-nav-btn span {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--binance-gold);
+  letter-spacing: 0.2px;
+}
+
+.dock-btn.dock-nav-btn:active span {
+  color: #fff;
+}
+
+
+/* Android Material 3 Style Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: var(--bg-subtle);
+  border-radius: 24px;
+  transition: .25s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: .25s;
+}
+
+input:checked + .slider {
+  background-color: var(--binance-gold);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+  background-color: #000;
+}
+
+/* Loading Spinner */
+.loader-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 14, 17, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 25;
+}
+
+.loader-overlay.show {
+  display: flex;
+}
+
+.android-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(240, 185, 11, 0.2);
+  border-top-color: var(--binance-gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Android Native-Style Toast Pill */
+.android-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(30, 35, 41, 0.95);
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  padding: 8px 18px;
+  border-radius: 24px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 999;
+  white-space: nowrap;
+}
+
+.android-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Symbol Navigation Chevrons in Header */
+.symbol-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.icon-nav-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  flex-shrink: 0;
+}
+
+.icon-nav-btn:active {
+  transform: scale(0.88);
+  background: var(--bg-subtle);
+  color: var(--binance-gold);
+}
+
+.icon-nav-btn:hover {
+  color: var(--text-main);
+  border-color: var(--binance-gold);
+}
+
+.sym-tag.cat-tag {
+  background: rgba(240, 185, 11, 0.2);
+  color: var(--binance-gold);
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+}
+
+/* Chart Style Pill in Touch Legend */
+.chart-type-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  color: var(--binance-gold);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  transition: all 0.12s;
+}
+
+.chart-type-pill:active {
+  transform: scale(0.92);
+  background: var(--bg-subtle);
+}
+
+/* Landscape Pro Mode: Auto-adapts for Fullscreen Candlestick View */
+@media (orientation: landscape) {
+  .stats-secondary { display: none; }
+  .app-header { height: 38px; min-height: 38px; }
+  .stats-ribbon { padding: 2px 10px; }
+  .live-price { font-size: 18px; }
+  .range-hud { max-width: 145px; min-width: 105px; padding: 2px 5px; gap: 2px; }
+  .range-hud-top { font-size: 9px; }
+  .range-hud-bar { height: 3px; }
+  .range-hud-pin { width: 6px; height: 6px; }
+  .dock-actions {
+    padding: 2px 4px 4px 4px;
+    gap: 2px;
+  }
+  .dock-btn {
+    height: 32px;
+  }
+  .dock-btn > span {
+    display: none;
+  }
+  .dock-tf-badge {
+    font-size: 10px;
+    padding: 0 4px;
+    line-height: 13px;
+  }
+  .dock-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}
