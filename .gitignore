@@ -17,3 +17,4 @@ node_modules/
 # Netlify dev cache
 .netlify/
 .l2s.*
+index2.html

@@ -4,33 +4,48 @@ A high-performance, mobile-optimized TradingView candlestick charting dashboard 
 
 ---
 
-## 🚀 How to Deploy on Netlify
+## 🚀 How to Deploy
 
-This project is built with zero-build static web standards and is 100% ready for instant Netlify hosting.
+This project is built with zero-build static web standards and is 100% ready for instant hosting on **Vercel** or **Netlify**.
 
-### Method 1: Git Integration (Recommended)
-1. Push this repository to **GitHub**, **GitLab**, or **Bitbucket**.
-2. Log in to [Netlify](https://app.netlify.com/).
-3. Click **Add new site** > **Import an existing project**.
-4. Select your repository.
-5. Netlify will auto-detect the configuration from `netlify.toml`:
-   - **Publish directory:** `.` (or root)
-   - **Build command:** (leave empty)
-6. Click **Deploy site**. Any future `git push` will trigger an automated continuous deployment!
+### Option A: Deploy to Vercel (Recommended)
 
-### Method 2: Netlify Drop (Instant Drag & Drop)
-1. Go to [app.netlify.com/drop](https://app.netlify.com/drop).
-2. Drag and drop the entire project directory into the browser.
-3. Your site is live in seconds with a custom `.netlify.app` URL and free SSL!
+#### Method 1: Git Integration
+1. Go to [vercel.com/new](https://vercel.com/new).
+2. Connect your GitHub account and select **`Raven-z1/cryptochart`**.
+3. Vercel automatically detects the configuration from [vercel.json](file:///sdcard/aic/cc/vercel.json):
+   - **Framework Preset:** Other
+   - **Root Directory:** `./`
+   - **Build Command:** *(leave empty)*
+   - **Output Directory:** `.`
+4. Click **Deploy**. Your site will be live at `https://cryptochart-xxx.vercel.app` with instant global CDN and SSL!
 
-### Method 3: Netlify CLI
-Run the following in your terminal:
+#### Method 2: Vercel CLI
+Run from the project directory:
 ```bash
-# Install Netlify CLI globally
-npm install -g netlify-cli
+# Deploy with Vercel CLI
+npx vercel --prod
+```
 
-# Login and deploy
-netlify deploy --prod
+---
+
+### Option B: Deploy to Netlify
+
+#### Method 1: Git Integration
+1. Go to [Netlify Dashboard](https://app.netlify.com/).
+2. Click **Add new site** > **Import an existing project** and select **`Raven-z1/cryptochart`**.
+3. Netlify will auto-detect settings from [netlify.toml](file:///sdcard/aic/cc/netlify.toml):
+   - **Publish directory:** `.`
+   - **Build command:** *(leave empty)*
+4. Click **Deploy site**.
+
+#### Method 2: Netlify Drop (Instant Drag & Drop)
+1. Go to [app.netlify.com/drop](https://app.netlify.com/drop).
+2. Drag and drop the project folder into the browser to deploy immediately.
+
+#### Method 3: Netlify CLI
+```bash
+npx netlify deploy --prod
 ```
 
 ---
