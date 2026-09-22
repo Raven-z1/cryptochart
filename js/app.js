@@ -189,11 +189,12 @@ dom.togUrgency.addEventListener('change', e => {
 });
 
 // Timeframe Sheet Listeners (Slide-in from bottom)
+function openTimeframeSheet() {
+  openSheet(dom.tfSheetBackdrop);
+  updateTimeframeUI();
+}
 if (dom.dockTfBtn) {
-  dom.dockTfBtn.addEventListener('click', () => {
-    updateTimeframeUI();
-    openSheet(dom.tfSheetBackdrop);
-  });
+  dom.dockTfBtn.addEventListener('click', openTimeframeSheet);
 }
 if (dom.tfSheetClose) {
   dom.tfSheetClose.addEventListener('click', closeAllSheets);
@@ -215,10 +216,7 @@ if (dom.tfSheetBody) {
 // Also tap chart watermark to open timeframe selector
 if (dom.chartWatermark) {
   dom.chartWatermark.style.cursor = 'pointer';
-  dom.chartWatermark.addEventListener('click', () => {
-    updateTimeframeUI();
-    openSheet(dom.tfSheetBackdrop);
-  });
+  dom.chartWatermark.addEventListener('click', openTimeframeSheet);
 }
 
 // Fit / Reset View (100 Candles Mobile Default)
