@@ -18,3 +18,4 @@ node_modules/
 .netlify/
 .l2s.*
 index2.html
+__pycache__/
