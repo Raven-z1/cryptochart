@@ -127,6 +127,9 @@ var state = {
     })(),
     lastResult: null,
     isAnalyzing: false,
+    lastAction: 'auto',
+    lastQuery: '',
+    abortController: null,
   },
 };
 
@@ -383,6 +386,13 @@ var dom = {
   btnTestAiConfig: document.getElementById('btn-test-ai-config'),
   btnClearAiConfig: document.getElementById('btn-clear-ai-config'),
   aiSheetTestResult: document.getElementById('ai-sheet-test-result'),
+  aiErrorCard: document.getElementById('ai-error-card'),
+  aiErrorTitle: document.getElementById('ai-error-title'),
+  aiErrorMsg: document.getElementById('ai-error-msg'),
+  btnAiRetry: document.getElementById('btn-ai-retry'),
+  btnAiErrorSettings: document.getElementById('btn-ai-error-settings'),
+  btnAiCancel: document.getElementById('btn-ai-cancel'),
+  aiResultMeta: document.getElementById('ai-result-meta'),
 
   // Unified API Sheet Tabs & Hugging Face Modal Elements
   tabBtnBinance: document.getElementById('tab-btn-binance'),

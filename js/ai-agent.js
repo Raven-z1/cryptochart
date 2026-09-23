@@ -210,6 +210,75 @@ Return strictly the JSON trade plan now.`;
   return { systemPrompt, userPrompt, snapshot };
 }
 
+// ---- Request timeout, cancellation & friendly error mapping ----
+const AI_REQ_TIMEOUT_MS = 45000;
+const AI_TEST_TIMEOUT_MS = 15000;
+
+/** Maps raw gateway HTTP errors to actionable, human-friendly messages. */
+function friendlyGatewayError(status, rawMsg = '') {
+  const raw = (rawMsg || '').trim();
+  if (status === 401 || status === 403) {
+    return `Token rejected (HTTP ${status}). Make sure your hf_... token is valid and has "Make calls to inference providers" enabled.`;
+  }
+  if (status === 402) {
+    return 'Hugging Face free credits are exhausted. Wait for the monthly reset, upgrade to PRO, or point the Gateway URL at another OpenAI-compatible provider.';
+  }
+  if (status === 404) {
+    return raw || 'Model or endpoint not found (HTTP 404). Pick a different model or check the Model ID.';
+  }
+  if (status === 408 || status === 504) {
+    return 'The gateway timed out (the provider may be cold-starting). Try again in a moment.';
+  }
+  if (status === 429) {
+    return 'Rate limited (HTTP 429). Wait a few seconds, then retry.';
+  }
+  if (status >= 500) {
+    return `Hugging Face provider error (HTTP ${status}). ${raw || 'Try again shortly.'}`;
+  }
+  return raw || `HTTP ${status}`;
+}
+
+function endpointHost(endpoint) {
+  try { return new URL(endpoint).host; } catch (_) { return endpoint; }
+}
+
+/**
+ * POST helper with timeout + cancellation.
+ * Errors carry `.cancelled` (user abort), `.timedOut`, or `.network` flags
+ * so callers can react appropriately.
+ */
+async function postChatCompletion(endpoint, payload, apiKey, timeoutMs = AI_REQ_TIMEOUT_MS) {
+  const controller = new AbortController();
+  state.aiAgent.abortController = controller;
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
+  try {
+    return await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+  } catch (err) {
+    if (controller.signal.aborted) {
+      const e = timedOut
+        ? new Error(`Request timed out after ${Math.round(timeoutMs / 1000)}s. The model may be loading — try again or pick a faster model.`)
+        : new Error('Analysis cancelled.');
+      if (timedOut) { e.timedOut = true; } else { e.cancelled = true; }
+      throw e;
+    }
+    const e = new Error(`Could not reach ${endpointHost(endpoint)} — check your internet connection. If this keeps happening, the gateway may be blocking browser (CORS) requests.`);
+    e.network = true;
+    throw e;
+  } finally {
+    clearTimeout(timer);
+    if (state.aiAgent.abortController === controller) state.aiAgent.abortController = null;
+  }
+}
+
 /**
  * Sends request to Hugging Face OpenAI-compatible AI Gateway
  */
@@ -239,60 +308,44 @@ async function callHuggingFace(systemPrompt, userPrompt) {
     response_format: { type: 'json_object' }
   };
 
-  let res;
-  try {
-    res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(payload)
-    });
-  } catch (netErr) {
-    throw new Error(`Failed to connect to Hugging Face at ${endpoint}. Check your internet connection and gateway URL.`);
-  }
+  let res = await postChatCompletion(endpoint, payload, apiKey, AI_REQ_TIMEOUT_MS);
 
   // Fallback retry if model doesn't support response_format: { type: "json_object" }
   if (res.status === 400) {
-    const errBody = await res.text();
+    const errBody = await res.text().catch(() => '');
     if (errBody.includes('response_format') || errBody.includes('json_object')) {
       delete payload.response_format;
-      res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify(payload)
-      });
+      res = await postChatCompletion(endpoint, payload, apiKey, AI_REQ_TIMEOUT_MS);
     } else {
       let errJson;
       try { errJson = JSON.parse(errBody); } catch (_) {}
-      throw new Error(errJson && errJson.error ? errJson.error.message : `Hugging Face HTTP 400: ${errBody.slice(0, 150)}`);
+      const raw = (errJson && errJson.error && errJson.error.message) || errBody.slice(0, 150);
+      throw new Error(friendlyGatewayError(400, raw));
     }
   }
 
   if (!res.ok) {
-    let errMessage = `Hugging Face API error (HTTP ${res.status})`;
+    const errText = await res.text().catch(() => '');
+    let raw = '';
     try {
-      const errData = await res.json();
-      if (errData && errData.error && errData.error.message) {
-        errMessage = errData.error.message;
-      }
-    } catch (_) {
-      const errText = await res.text().catch(() => '');
-      if (errText) errMessage += `: ${errText.slice(0, 120)}`;
-    }
-    throw new Error(errMessage);
+      const j = JSON.parse(errText);
+      raw = (j.error && j.error.message) || '';
+    } catch (_) {}
+    if (!raw) raw = errText.slice(0, 150);
+    throw new Error(friendlyGatewayError(res.status, raw));
   }
 
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch (_) {
+    throw new Error('Hugging Face returned a malformed (non-JSON) response. Try again or switch models.');
+  }
   if (!data.choices || !data.choices.length || !data.choices[0].message) {
-    throw new Error('Hugging Face returned an empty or invalid response format.');
+    throw new Error('Hugging Face returned an empty response (no choices). Try a different model.');
   }
 
-  return data.choices[0].message.content;
+  return data.choices[0].message.content || '';
 }
 
 /**
@@ -309,14 +362,14 @@ function parseAiResponse(rawContent, snapshot) {
   // Regex extract JSON block
   const jsonMatch = content.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    throw new Error('Could not parse valid JSON from AI Agent response.');
+    throw new Error('The model did not return a JSON trade plan. Tap Retry, or switch to a more reliable model (e.g. openai/gpt-oss-20b).');
   }
 
   let result;
   try {
     result = JSON.parse(jsonMatch[0]);
   } catch (e) {
-    throw new Error('JSON parsing failed: ' + e.message);
+    throw new Error('JSON parsing failed: ' + e.message + ' — tap Retry or switch models.');
   }
 
   const signal = ((result.signal || 'LONG') + '').toUpperCase();
@@ -346,22 +399,51 @@ function parseAiResponse(rawContent, snapshot) {
   const reward = isShort ? (entry - tp) : (tp - entry);
   const actualRr = (risk > 0 && reward > 0) ? (reward / risk) : 2.0;
 
+  let conf = parseInt(result.confidence, 10);
+  if (!Number.isFinite(conf)) conf = 75;
+  conf = Math.min(99, Math.max(1, conf));
+
   return {
     signal: isShort ? 'SHORT' : 'LONG',
     entryPrice: parseFloat(entry.toFixed(prec)),
     tpPrice: parseFloat(tp.toFixed(prec)),
     slPrice: parseFloat(sl.toFixed(prec)),
     riskReward: parseFloat(actualRr.toFixed(2)),
-    confidence: parseInt(result.confidence || 75, 10),
-    strategy: result.strategy || 'Hugging Face AI Setup',
-    rationale: result.rationale || 'Technical structure and momentum setup generated by Hugging Face AI.',
-    invalidation: result.invalidation || `Price breaks beyond stop loss at $${sl.toFixed(prec)}`
+    confidence: conf,
+    strategy: String(result.strategy || 'Hugging Face AI Setup').slice(0, 120),
+    rationale: String(result.rationale || 'Technical structure and momentum setup generated by Hugging Face AI.').slice(0, 600),
+    invalidation: String(result.invalidation || `Price breaks beyond stop loss at $${sl.toFixed(prec)}`).slice(0, 240)
   };
 }
 
 // =========================================================================
 // 3. EXECUTION ENGINE & UI CONTROLLER
 // =========================================================================
+
+function hideAiErrorCard() {
+  if (dom.aiErrorCard) dom.aiErrorCard.classList.add('hidden');
+}
+
+function renderAiErrorCard(message, title = 'Analysis failed') {
+  if (!dom.aiErrorCard) return;
+  if (dom.aiErrorTitle) dom.aiErrorTitle.textContent = title;
+  if (dom.aiErrorMsg) dom.aiErrorMsg.textContent = message;
+  dom.aiErrorCard.classList.remove('hidden');
+  try { dom.aiErrorCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) {}
+}
+
+function cancelAiAnalysis() {
+  haptic(10);
+  const controller = state.aiAgent.abortController;
+  if (controller) {
+    if (dom.aiLoadingSubtext) dom.aiLoadingSubtext.textContent = 'Cancelling…';
+    controller.abort();
+  } else {
+    state.aiAgent.isAnalyzing = false;
+    updateAiUiLoadingState(false);
+    showToast('⏹ Analysis cancelled');
+  }
+}
 
 /**
  * Main trigger to execute an AI Agent analysis & draw position
@@ -386,6 +468,10 @@ async function runAiTradeAnalysis(actionType = 'auto', customQuery = '') {
     if (inputToFocus) inputToFocus.focus();
     return;
   }
+
+  state.aiAgent.lastAction = actionType;
+  state.aiAgent.lastQuery = customQuery;
+  hideAiErrorCard();
 
   try {
     state.aiAgent.isAnalyzing = true;
@@ -412,17 +498,20 @@ async function runAiTradeAnalysis(actionType = 'auto', customQuery = '') {
     });
 
     renderAiResultCard(plan);
-    updateAiUiLoadingState(false);
     showToast(`✨ Hugging Face AI: ${plan.signal} Setup Plotted!`);
   } catch (err) {
     console.error('Hugging Face AI Error:', err);
-    updateAiUiLoadingState(false);
-    showToast(`⚠️ AI Agent Error: ${err.message}`);
-    if (dom.aiLoadingSubtext) {
-      dom.aiLoadingSubtext.textContent = err.message;
+    if (err && err.cancelled) {
+      showToast('⏹ Analysis cancelled');
+    } else {
+      const msg = (err && err.message) || 'Unknown error';
+      renderAiErrorCard(msg);
+      showToast(`⚠️ ${msg.length > 90 ? msg.slice(0, 90) + '…' : msg}`);
     }
   } finally {
     state.aiAgent.isAnalyzing = false;
+    state.aiAgent.abortController = null;
+    updateAiUiLoadingState(false);
   }
 }
 
@@ -432,6 +521,9 @@ function updateAiUiLoadingState(isLoading, actionType = 'auto') {
   }
   if (dom.aiResultCard && isLoading) {
     dom.aiResultCard.classList.add('hidden');
+  }
+  if (isLoading) {
+    hideAiErrorCard();
   }
 
   if (isLoading) {
@@ -472,7 +564,8 @@ function renderAiResultCard(plan) {
   }
 
   if (dom.aiConfBadge) {
-    dom.aiConfBadge.textContent = `${plan.confidence}% Conf`;
+    const conf = parseInt(plan.confidence, 10);
+    dom.aiConfBadge.textContent = `${Number.isFinite(conf) ? Math.min(99, Math.max(1, conf)) : 75}% Conf`;
   }
 
   if (dom.aiResEntry) dom.aiResEntry.textContent = `$${formatPrice(entry)}`;
@@ -480,11 +573,17 @@ function renderAiResultCard(plan) {
   if (dom.aiResTpPct) dom.aiResTpPct.textContent = `+${Math.abs(tpPct).toFixed(2)}%`;
   if (dom.aiResSl) dom.aiResSl.textContent = `$${formatPrice(sl)}`;
   if (dom.aiResSlPct) dom.aiResSlPct.textContent = `-${Math.abs(slPct).toFixed(2)}%`;
-  if (dom.aiResRr) dom.aiResRr.textContent = `1:${plan.riskReward.toFixed(2)}`;
+  const rr = Number(plan.riskReward);
+  if (dom.aiResRr) dom.aiResRr.textContent = (Number.isFinite(rr) && rr > 0) ? `1:${rr.toFixed(2)}` : '1:2.00';
 
   if (dom.aiRationaleTitle) dom.aiRationaleTitle.textContent = `Strategy: ${plan.strategy}`;
   if (dom.aiRationaleText) dom.aiRationaleText.textContent = plan.rationale;
   if (dom.aiInvalidationText) dom.aiInvalidationText.textContent = `Invalidation: ${plan.invalidation}`;
+
+  if (dom.aiResultMeta) {
+    const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    dom.aiResultMeta.textContent = `${state.aiAgent.model || 'openai/gpt-oss-120b'} · ${state.symbol} ${state.interval} · ${t}`;
+  }
 
   dom.aiResultCard.classList.remove('hidden');
 }
@@ -501,7 +600,7 @@ function updateGatewayStatusBadge() {
     dom.aiGatewayStatusDot.className = `ai-dot ${key ? 'configured' : 'warning'}`;
   }
   if (dom.aiGatewayStatusText) {
-    dom.aiGatewayStatusText.textContent = key ? 'Hugging Face Stored in Browser' : 'API Key Required';
+    dom.aiGatewayStatusText.textContent = key ? 'Token saved · Ready' : 'Token required';
   }
   if (dom.aiModelCurrentBadge) {
     dom.aiModelCurrentBadge.textContent = model;
@@ -580,6 +679,7 @@ function saveHuggingFaceConfig(baseVal, keyVal, modelVal, showNotification = tru
   state.aiAgent.apiKey = key;
   state.aiAgent.model = model;
 
+  let storageOk = true;
   try {
     localStorage.setItem('cc_huggingface_base', base);
     if (key) {
@@ -589,6 +689,7 @@ function saveHuggingFaceConfig(baseVal, keyVal, modelVal, showNotification = tru
     }
     localStorage.setItem('cc_huggingface_model', model);
   } catch (err) {
+    storageOk = false;
     console.warn('localStorage error:', err);
   }
 
@@ -600,8 +701,13 @@ function saveHuggingFaceConfig(baseVal, keyVal, modelVal, showNotification = tru
   }
 
   if (showNotification) {
-    showToast(key ? '🔒 Hugging Face Key saved in browser storage' : 'Hugging Face API Key cleared');
+    if (key) {
+      showToast(storageOk ? '🔒 Hugging Face token saved in browser storage' : '⚠️ Browser storage blocked — token active this session only');
+    } else {
+      showToast('Hugging Face API Key cleared');
+    }
   }
+  return storageOk;
 }
 
 function clearHuggingFaceConfig() {
@@ -661,31 +767,23 @@ async function testHuggingFaceConnection(targetResultEl, testBase, testKey, test
 
   const startTime = Date.now();
   try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${key}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [{ role: 'user', content: 'Ping' }],
-        max_tokens: 3
-      })
-    });
+    const res = await postChatCompletion(endpoint, {
+      model: model,
+      messages: [{ role: 'user', content: 'Ping' }],
+      max_tokens: 3
+    }, key, AI_TEST_TIMEOUT_MS);
 
     const elapsed = Date.now() - startTime;
 
     if (!res.ok) {
-      const errText = await res.text();
-      let msg = `HTTP ${res.status}`;
+      const errText = await res.text().catch(() => '');
+      let raw = '';
       try {
         const j = JSON.parse(errText);
-        if (j.error && j.error.message) msg = j.error.message;
-      } catch (_) {
-        if (errText) msg = errText.slice(0, 100);
-      }
-      throw new Error(msg);
+        raw = (j.error && j.error.message) || '';
+      } catch (_) {}
+      if (!raw) raw = errText.slice(0, 120);
+      throw new Error(friendlyGatewayError(res.status, raw));
     }
 
     if (targetResultEl) {
@@ -694,8 +792,8 @@ async function testHuggingFaceConnection(targetResultEl, testBase, testKey, test
       targetResultEl.classList.remove('hidden');
     }
     // Auto-save the verified working key!
-    saveHuggingFaceConfig(base, key, model, false);
-    showToast(`✅ Hugging Face connected (${elapsed}ms) & saved`);
+    const saved = saveHuggingFaceConfig(base, key, model, false);
+    showToast(saved ? `✅ Hugging Face connected (${elapsed}ms) & saved` : `✅ Connected (${elapsed}ms) — ⚠️ storage blocked, token kept this session`);
   } catch (err) {
     if (targetResultEl) {
       targetResultEl.className = 'api-test-result fail';
@@ -912,6 +1010,30 @@ function initAiAgent() {
     testAiConfigBtn.addEventListener('click', () => {
       const resEl = document.getElementById('ai-sheet-test-result') || dom.aiSheetTestResult;
       testHuggingFaceConnection(resEl);
+    });
+  }
+
+  // Cancel a running analysis
+  if (dom.btnAiCancel) {
+    dom.btnAiCancel.addEventListener('click', cancelAiAnalysis);
+  }
+
+  // Error card actions: retry with the same request, or open gateway settings
+  if (dom.btnAiRetry) {
+    dom.btnAiRetry.addEventListener('click', () => {
+      hideAiErrorCard();
+      runAiTradeAnalysis(state.aiAgent.lastAction || 'auto', state.aiAgent.lastQuery || '');
+    });
+  }
+  if (dom.btnAiErrorSettings) {
+    dom.btnAiErrorSettings.addEventListener('click', () => {
+      hideAiErrorCard();
+      if (dom.aiConfigCard) dom.aiConfigCard.classList.remove('hidden');
+      const keyInput = document.getElementById('ai-key-input');
+      if (keyInput) {
+        try { keyInput.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) {}
+        keyInput.focus();
+      }
     });
   }
 

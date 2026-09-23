@@ -31,11 +31,11 @@
 
   <!-- Modular Stylesheets -->
   <!-- Cache-busted asset URLs (?v=) so clients always fetch the latest CSS/JS after a deploy -->
-  <link rel="stylesheet" href="css/base.css?v=20260923-3">
-  <link rel="stylesheet" href="css/chart.css?v=20260923-3">
-  <link rel="stylesheet" href="css/position-tool.css?v=20260923-3">
-  <link rel="stylesheet" href="css/sheets.css?v=20260923-3">
-  <link rel="stylesheet" href="css/ai-agent.css?v=20260923-3">
+  <link rel="stylesheet" href="css/base.css?v=20260923-4">
+  <link rel="stylesheet" href="css/chart.css?v=20260923-4">
+  <link rel="stylesheet" href="css/position-tool.css?v=20260923-4">
+  <link rel="stylesheet" href="css/sheets.css?v=20260923-4">
+  <link rel="stylesheet" href="css/ai-agent.css?v=20260923-4">
 </head>
 <body>
 
@@ -1010,9 +1010,12 @@
         <div class="ai-gateway-banner">
           <div class="ai-gateway-status">
             <span class="ai-dot warning" id="ai-gateway-status-dot"></span>
-            <span id="ai-gateway-status-text">API Key Required</span>
+            <div class="ai-status-copy">
+              <span id="ai-gateway-status-text">API Key Required</span>
+              <span class="ai-gateway-sub">Hugging Face · OpenAI-compatible · stored locally</span>
+            </div>
           </div>
-          <div style="display: flex; align-items: center; gap: 6px;">
+          <div class="ai-banner-right">
             <span class="ai-gateway-model-tag" id="ai-model-current-badge">openai/gpt-oss-120b</span>
             <button type="button" class="btn-toggle-config" id="btn-toggle-ai-config" title="Toggle Gateway Settings">⚙</button>
           </div>
@@ -1021,8 +1024,8 @@
         <!-- Collapsible Gateway Settings Card -->
         <div class="ai-config-card" id="ai-config-card">
           <div class="ai-config-title">
-            <span>⚙️ Hugging Face Gateway Configuration</span>
-            <span style="font-size: 10px; color: var(--text-muted);">OpenAI-Compatible</span>
+            <span>🔑 Hugging Face Gateway</span>
+            <span class="ai-config-badge">OpenAI-Compatible</span>
           </div>
 
           <div class="api-input-group">
@@ -1031,9 +1034,9 @@
           </div>
 
           <div class="api-input-group">
-            <label class="confirm-field-lbl" for="ai-key-input">Hugging Face API Key:</label>
+            <label class="confirm-field-lbl" for="ai-key-input">Hugging Face Token:</label>
             <div class="api-input-wrap">
-              <input type="password" id="ai-key-input" class="api-text-input" placeholder="Paste Hugging Face API Key..." autocomplete="off">
+              <input type="password" id="ai-key-input" class="api-text-input" placeholder="Paste hf_ token..." autocomplete="off" autocapitalize="off" spellcheck="false">
               <button type="button" class="api-toggle-vis" id="btn-toggle-ai-key-vis" title="Toggle visibility">👁</button>
             </div>
             <span class="api-input-hint">Get your key at <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener" style="color: #c084fc; text-decoration: underline;">huggingface.co/settings/tokens</a>. Stored locally in your browser.</span>
@@ -1062,7 +1065,7 @@
 
         <!-- Strategy Style Picker -->
         <div class="ai-strategy-section">
-          <span class="ai-section-lbl">Trading Strategy Style</span>
+          <span class="ai-section-lbl">🎯 Strategy Style</span>
           <div class="ai-strategy-pills">
             <button type="button" class="ai-strat-pill active" data-strat="scalp">⚡ 5m Scalp &amp; ATR</button>
             <button type="button" class="ai-strat-pill" data-strat="breakout">🚀 Momentum Breakout</button>
@@ -1073,6 +1076,7 @@
         </div>
 
         <!-- Quick AI Action Triggers -->
+        <span class="ai-section-lbl">⚡ AI Trade Signals</span>
         <div class="ai-quick-triggers">
           <button type="button" class="ai-action-btn ai-action-long" id="btn-ai-long" title="Generate AI Long Trade Setup">
             <span>▲</span>
@@ -1090,7 +1094,7 @@
 
         <!-- Custom Query Input -->
         <div class="ai-custom-input-wrap">
-          <label class="ai-section-lbl" for="ai-prompt-input">Custom Instructions / Questions (Optional):</label>
+          <label class="ai-section-lbl" for="ai-prompt-input">💬 Custom Instructions (Optional)</label>
           <textarea id="ai-prompt-input" class="ai-prompt-textarea" placeholder="e.g. Look for liquidity sweep near 24h low and set long with tight SL..."></textarea>
           <button type="button" class="pos-sheet-preset" id="btn-ai-run-custom" style="height: 36px; font-weight: 700; font-size: 12px; background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #d8b4fe;">💬 Run Custom AI Analysis</button>
         </div>
@@ -1100,6 +1104,20 @@
           <div class="ai-spinner"></div>
           <div class="ai-loading-text" id="ai-loading-text">Analyzing BTCUSDT (5m)...</div>
           <div class="ai-loading-subtext" id="ai-loading-subtext">Connecting to Hugging Face gateway...</div>
+          <button type="button" class="ai-btn-cancel" id="btn-ai-cancel">✕ Cancel Analysis</button>
+        </div>
+
+        <!-- Error State Card -->
+        <div class="ai-error-card hidden" id="ai-error-card" role="alert">
+          <div class="ai-error-head">
+            <span class="ai-error-icon">⚠️</span>
+            <span class="ai-error-title" id="ai-error-title">Analysis failed</span>
+          </div>
+          <span class="ai-error-msg" id="ai-error-msg">Something went wrong.</span>
+          <div class="ai-error-actions">
+            <button type="button" class="ai-btn-retry" id="btn-ai-retry">↻ Retry</button>
+            <button type="button" class="ai-btn-settings" id="btn-ai-error-settings">⚙ Gateway Settings</button>
+          </div>
         </div>
 
         <!-- AI Trade Recommendation Result Card -->
@@ -1108,6 +1126,9 @@
             <span class="ai-signal-badge long" id="ai-signal-badge">▲ LONG</span>
             <span class="ai-conf-badge" id="ai-conf-badge">85% Conf</span>
           </div>
+
+          <!-- Result Meta: model · symbol · time -->
+          <div class="ai-result-meta" id="ai-result-meta">openai/gpt-oss-120b · just now</div>
 
           <!-- Price & Target Metrics Grid -->
           <div class="ai-price-grid">
@@ -1170,14 +1191,14 @@
 
 
   <!-- Application Logic Modules -->
-  <script src="js/config.js?v=20260923-3"></script>
-  <script src="js/utils.js?v=20260923-3"></script>
-  <script src="js/chart.js?v=20260923-3"></script>
-  <script src="js/ui.js?v=20260923-3"></script>
-  <script src="js/position-tool.js?v=20260923-3"></script>
-  <script src="js/binance-api.js?v=20260923-3"></script>
-  <script src="js/positions-manager.js?v=20260923-3"></script>
-  <script src="js/ai-agent.js?v=20260923-3"></script>
-  <script src="js/app.js?v=20260923-3"></script>
+  <script src="js/config.js?v=20260923-4"></script>
+  <script src="js/utils.js?v=20260923-4"></script>
+  <script src="js/chart.js?v=20260923-4"></script>
+  <script src="js/ui.js?v=20260923-4"></script>
+  <script src="js/position-tool.js?v=20260923-4"></script>
+  <script src="js/binance-api.js?v=20260923-4"></script>
+  <script src="js/positions-manager.js?v=20260923-4"></script>
+  <script src="js/ai-agent.js?v=20260923-4"></script>
+  <script src="js/app.js?v=20260923-4"></script>
 </body>
 </html>

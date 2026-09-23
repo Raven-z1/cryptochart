@@ -26,6 +26,11 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Global visibility utility — JS toggles this class to show/hide panels */
+.hidden {
+  display: none !important;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
