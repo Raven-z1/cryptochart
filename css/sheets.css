@@ -1007,7 +1007,65 @@
   animation: spin 0.7s linear infinite;
 }
 
-/* Binance API Config Modal */
+/* API & Gateway Configuration Modal */
+.api-config-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--bg-card);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 2px;
+}
+
+.api-config-tab-btn {
+  flex: 1;
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.api-config-tab-btn:hover {
+  color: var(--text-main);
+}
+
+.api-config-tab-btn.active {
+  background: var(--bg-surface);
+  border-color: var(--border-light);
+  color: var(--text-main);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.api-config-tab-btn.active[data-tab="binance"] {
+  border-color: rgba(240, 185, 11, 0.4);
+  color: var(--binance-gold);
+}
+
+.api-config-tab-btn.active[data-tab="unorouter"] {
+  border-color: rgba(168, 85, 247, 0.45);
+  color: #c084fc;
+}
+
+.api-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.api-tab-panel.hidden {
+  display: none !important;
+}
+
 .api-sheet-body {
   display: flex;
   flex-direction: column;

@@ -277,7 +277,7 @@ function updateApiEnvDisplay() {
   }
 }
 
-function openApiSheet() {
+function openApiSheet(initialTab = 'binance') {
   haptic(15);
   if (dom.apiKeyInput) dom.apiKeyInput.value = state.binanceApi.key || '';
   if (dom.apiSecretInput) dom.apiSecretInput.value = state.binanceApi.secret || '';
@@ -287,6 +287,24 @@ function openApiSheet() {
     dom.apiTestResult.textContent = '';
   }
   updateApiEnvDisplay();
+
+  // Switch to selected tab
+  if (initialTab === 'unorouter') {
+    if (dom.tabBtnUnoRouter) dom.tabBtnUnoRouter.classList.add('active');
+    if (dom.tabBtnBinance) dom.tabBtnBinance.classList.remove('active');
+    if (dom.panelApiUnoRouter) dom.panelApiUnoRouter.classList.remove('hidden');
+    if (dom.panelApiBinance) dom.panelApiBinance.classList.add('hidden');
+  } else {
+    if (dom.tabBtnBinance) dom.tabBtnBinance.classList.add('active');
+    if (dom.tabBtnUnoRouter) dom.tabBtnUnoRouter.classList.remove('active');
+    if (dom.panelApiBinance) dom.panelApiBinance.classList.remove('hidden');
+    if (dom.panelApiUnoRouter) dom.panelApiUnoRouter.classList.add('hidden');
+  }
+
+  if (typeof window.syncUnoRouterInputs === 'function') {
+    window.syncUnoRouterInputs();
+  }
+
   openSheet(dom.apiSheetBackdrop);
 }
 

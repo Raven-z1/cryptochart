@@ -491,38 +491,166 @@ function updateGatewayStatusBadge() {
     dom.aiGatewayStatusDot.className = `ai-dot ${key ? 'configured' : 'warning'}`;
   }
   if (dom.aiGatewayStatusText) {
-    dom.aiGatewayStatusText.textContent = key ? 'UnoRouter Gateway Active' : 'API Key Required';
+    dom.aiGatewayStatusText.textContent = key ? 'UnoRouter Stored in Browser' : 'API Key Required';
   }
   if (dom.aiModelCurrentBadge) {
     dom.aiModelCurrentBadge.textContent = model;
   }
 }
 
+// Synchronize UnoRouter configuration inputs across modals
+function syncUnoRouterInputs() {
+  const base = state.aiAgent.gatewayUrl || 'https://api.unorouter.com/v1';
+  const key = state.aiAgent.apiKey || '';
+  const model = state.aiAgent.model || 'gpt-4o-mini';
+
+  if (dom.aiGatewayBaseInput) dom.aiGatewayBaseInput.value = base;
+  if (dom.unoModalBaseInput) dom.unoModalBaseInput.value = base;
+
+  if (dom.aiKeyInput) dom.aiKeyInput.value = key;
+  if (dom.unoModalKeyInput) dom.unoModalKeyInput.value = key;
+
+  if (dom.aiModelInput) dom.aiModelInput.value = model;
+  if (dom.unoModalModelInput) dom.unoModalModelInput.value = model;
+
+  document.querySelectorAll('.ai-model-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.model === model);
+  });
+}
+
+function saveUnoRouterConfig(baseVal, keyVal, modelVal) {
+  haptic(15);
+  const base = (baseVal || 'https://api.unorouter.com/v1').trim() || 'https://api.unorouter.com/v1';
+  const key = (keyVal || '').trim();
+  const model = (modelVal || 'gpt-4o-mini').trim() || 'gpt-4o-mini';
+
+  state.aiAgent.gatewayUrl = base;
+  state.aiAgent.apiKey = key;
+  state.aiAgent.model = model;
+
+  try {
+    localStorage.setItem('cc_unorouter_base', base);
+    if (key) {
+      localStorage.setItem('cc_unorouter_key', key);
+    } else {
+      localStorage.removeItem('cc_unorouter_key');
+    }
+    localStorage.setItem('cc_unorouter_model', model);
+  } catch (_) {}
+
+  syncUnoRouterInputs();
+  updateGatewayStatusBadge();
+
+  if (dom.aiConfigCard) dom.aiConfigCard.classList.add('hidden');
+  showToast(key ? '🔒 UnoRouter Key saved in browser storage' : 'UnoRouter API Key cleared');
+}
+
+function clearUnoRouterConfig() {
+  haptic(15);
+  state.aiAgent.apiKey = '';
+  try {
+    localStorage.removeItem('cc_unorouter_key');
+  } catch (_) {}
+
+  syncUnoRouterInputs();
+  updateGatewayStatusBadge();
+
+  [dom.unoModalTestResult, dom.aiSheetTestResult].forEach(el => {
+    if (el) {
+      el.classList.add('hidden');
+      el.textContent = '';
+    }
+  });
+
+  showToast('UnoRouter API Key disconnected from browser');
+}
+
+async function testUnoRouterConnection(targetResultEl, testBase, testKey, testModel) {
+  haptic(10);
+  const base = (testBase || state.aiAgent.gatewayUrl || 'https://api.unorouter.com/v1').trim();
+  const key = (testKey !== undefined ? testKey : state.aiAgent.apiKey || '').trim();
+  const model = (testModel || state.aiAgent.model || 'gpt-4o-mini').trim();
+
+  if (!key) {
+    if (targetResultEl) {
+      targetResultEl.className = 'api-test-result fail';
+      targetResultEl.textContent = '❌ Please enter an UnoRouter API Key first.';
+      targetResultEl.classList.remove('hidden');
+    }
+    showToast('Enter UnoRouter API Key first');
+    return;
+  }
+
+  if (targetResultEl) {
+    targetResultEl.className = 'api-test-result';
+    targetResultEl.textContent = `⏳ Testing connection to UnoRouter (${model})...`;
+    targetResultEl.classList.remove('hidden');
+  }
+
+  let endpoint = base.replace(/\/+$/, '');
+  if (!endpoint.endsWith('/chat/completions')) {
+    endpoint = endpoint + '/chat/completions';
+  }
+
+  const startTime = Date.now();
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: 'Ping' }],
+        max_tokens: 3
+      })
+    });
+
+    const elapsed = Date.now() - startTime;
+
+    if (!res.ok) {
+      const errText = await res.text();
+      let msg = `HTTP ${res.status}`;
+      try {
+        const j = JSON.parse(errText);
+        if (j.error && j.error.message) msg = j.error.message;
+      } catch (_) {
+        if (errText) msg = errText.slice(0, 100);
+      }
+      throw new Error(msg);
+    }
+
+    if (targetResultEl) {
+      targetResultEl.className = 'api-test-result success';
+      targetResultEl.textContent = `✅ Success! Authenticated with UnoRouter (${model}). Latency: ${elapsed}ms.`;
+    }
+    showToast(`✅ UnoRouter connected (${elapsed}ms)`);
+  } catch (err) {
+    if (targetResultEl) {
+      targetResultEl.className = 'api-test-result fail';
+      targetResultEl.textContent = `❌ ${err.message}`;
+    }
+    showToast(`❌ Connection failed: ${err.message}`);
+  }
+}
+
 function initAiAgent() {
   // Populate inputs from saved state
-  if (dom.aiGatewayBaseInput) {
-    dom.aiGatewayBaseInput.value = state.aiAgent.gatewayUrl || 'https://api.unorouter.com/v1';
-  }
-  if (dom.aiKeyInput) {
-    dom.aiKeyInput.value = state.aiAgent.apiKey || '';
-  }
-  if (dom.aiModelInput) {
-    dom.aiModelInput.value = state.aiAgent.model || 'gpt-4o-mini';
-  }
+  syncUnoRouterInputs();
   if (dom.aiPromptInput && state.aiAgent.customPrompt) {
     dom.aiPromptInput.value = state.aiAgent.customPrompt;
   }
 
-  // Highlight active model chip
+  // Model chips selection across both panels
   document.querySelectorAll('.ai-model-chip').forEach(chip => {
-    const m = chip.dataset.model;
-    chip.classList.toggle('active', m === state.aiAgent.model);
     chip.addEventListener('click', () => {
       haptic(10);
-      document.querySelectorAll('.ai-model-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      if (dom.aiModelInput) dom.aiModelInput.value = m;
+      const m = chip.dataset.model;
       state.aiAgent.model = m;
+      if (dom.aiModelInput) dom.aiModelInput.value = m;
+      if (dom.unoModalModelInput) dom.unoModalModelInput.value = m;
+      document.querySelectorAll('.ai-model-chip').forEach(c => c.classList.toggle('active', c.dataset.model === m));
       try { localStorage.setItem('cc_unorouter_model', m); } catch (_) {}
       updateGatewayStatusBadge();
     });
@@ -541,7 +669,7 @@ function initAiAgent() {
     });
   });
 
-  // Toggle Config Panel
+  // Toggle Config Panel in AI Sheet
   if (dom.btnToggleAiConfig && dom.aiConfigCard) {
     dom.btnToggleAiConfig.addEventListener('click', () => {
       haptic(10);
@@ -549,7 +677,7 @@ function initAiAgent() {
     });
   }
 
-  // Toggle Key Visibility
+  // Toggle Key Visibility in AI Sheet
   if (dom.btnToggleAiKeyVis && dom.aiKeyInput) {
     dom.btnToggleAiKeyVis.addEventListener('click', () => {
       const isPass = dom.aiKeyInput.type === 'password';
@@ -558,27 +686,83 @@ function initAiAgent() {
     });
   }
 
-  // Save Config Button
+  // Toggle Key Visibility in Unified API Sheet
+  if (dom.btnToggleUnoModalVis && dom.unoModalKeyInput) {
+    dom.btnToggleUnoModalVis.addEventListener('click', () => {
+      const isPass = dom.unoModalKeyInput.type === 'password';
+      dom.unoModalKeyInput.type = isPass ? 'text' : 'password';
+      dom.btnToggleUnoModalVis.textContent = isPass ? '🔒' : '👁';
+    });
+  }
+
+  // Unified API Sheet Tab Switching
+  if (dom.tabBtnBinance && dom.tabBtnUnoRouter) {
+    dom.tabBtnBinance.addEventListener('click', () => {
+      haptic(10);
+      dom.tabBtnBinance.classList.add('active');
+      dom.tabBtnUnoRouter.classList.remove('active');
+      if (dom.panelApiBinance) dom.panelApiBinance.classList.remove('hidden');
+      if (dom.panelApiUnoRouter) dom.panelApiUnoRouter.classList.add('hidden');
+    });
+
+    dom.tabBtnUnoRouter.addEventListener('click', () => {
+      haptic(10);
+      dom.tabBtnUnoRouter.classList.add('active');
+      dom.tabBtnBinance.classList.remove('active');
+      if (dom.panelApiUnoRouter) dom.panelApiUnoRouter.classList.remove('hidden');
+      if (dom.panelApiBinance) dom.panelApiBinance.classList.add('hidden');
+      syncUnoRouterInputs();
+    });
+  }
+
+  // Save UnoRouter Config (Unified API Sheet)
+  if (dom.btnUnoModalSave) {
+    dom.btnUnoModalSave.addEventListener('click', () => {
+      const base = dom.unoModalBaseInput ? dom.unoModalBaseInput.value : '';
+      const key = dom.unoModalKeyInput ? dom.unoModalKeyInput.value : '';
+      const model = dom.unoModalModelInput ? dom.unoModalModelInput.value : '';
+      saveUnoRouterConfig(base, key, model);
+      closeAllSheets();
+    });
+  }
+
+  // Disconnect UnoRouter (Unified API Sheet)
+  if (dom.btnUnoModalClear) {
+    dom.btnUnoModalClear.addEventListener('click', clearUnoRouterConfig);
+  }
+
+  // Test UnoRouter (Unified API Sheet)
+  if (dom.btnUnoModalTest) {
+    dom.btnUnoModalTest.addEventListener('click', () => {
+      const base = dom.unoModalBaseInput ? dom.unoModalBaseInput.value : '';
+      const key = dom.unoModalKeyInput ? dom.unoModalKeyInput.value : '';
+      const model = dom.unoModalModelInput ? dom.unoModalModelInput.value : '';
+      testUnoRouterConnection(dom.unoModalTestResult, base, key, model);
+    });
+  }
+
+  // Save UnoRouter Config (AI Bottom Sheet)
   if (dom.btnSaveAiConfig) {
     dom.btnSaveAiConfig.addEventListener('click', () => {
-      haptic(15);
-      const base = (dom.aiGatewayBaseInput ? dom.aiGatewayBaseInput.value : '').trim() || 'https://api.unorouter.com/v1';
-      const key = (dom.aiKeyInput ? dom.aiKeyInput.value : '').trim();
-      const model = (dom.aiModelInput ? dom.aiModelInput.value : '').trim() || 'gpt-4o-mini';
+      const base = dom.aiGatewayBaseInput ? dom.aiGatewayBaseInput.value : '';
+      const key = dom.aiKeyInput ? dom.aiKeyInput.value : '';
+      const model = dom.aiModelInput ? dom.aiModelInput.value : '';
+      saveUnoRouterConfig(base, key, model);
+    });
+  }
 
-      state.aiAgent.gatewayUrl = base;
-      state.aiAgent.apiKey = key;
-      state.aiAgent.model = model;
+  // Disconnect UnoRouter (AI Bottom Sheet)
+  if (dom.btnClearAiConfig) {
+    dom.btnClearAiConfig.addEventListener('click', clearUnoRouterConfig);
+  }
 
-      try {
-        localStorage.setItem('cc_unorouter_base', base);
-        localStorage.setItem('cc_unorouter_key', key);
-        localStorage.setItem('cc_unorouter_model', model);
-      } catch (_) {}
-
-      updateGatewayStatusBadge();
-      if (dom.aiConfigCard) dom.aiConfigCard.classList.add('hidden');
-      showToast('✅ UnoRouter Gateway settings saved!');
+  // Test UnoRouter (AI Bottom Sheet)
+  if (dom.btnTestAiConfig) {
+    dom.btnTestAiConfig.addEventListener('click', () => {
+      const base = dom.aiGatewayBaseInput ? dom.aiGatewayBaseInput.value : '';
+      const key = dom.aiKeyInput ? dom.aiKeyInput.value : '';
+      const model = dom.aiModelInput ? dom.aiModelInput.value : '';
+      testUnoRouterConnection(dom.aiSheetTestResult, base, key, model);
     });
   }
 
@@ -726,6 +910,10 @@ window.runAiTradeAnalysis = runAiTradeAnalysis;
 window.openAiSheet = openAiSheet;
 window.getMarketTechnicalSnapshot = getMarketTechnicalSnapshot;
 window.initAiAgent = initAiAgent;
+window.syncUnoRouterInputs = syncUnoRouterInputs;
+window.saveUnoRouterConfig = saveUnoRouterConfig;
+window.clearUnoRouterConfig = clearUnoRouterConfig;
+window.testUnoRouterConnection = testUnoRouterConnection;
 
 // Initialize once DOM is ready
 if (document.readyState === 'loading') {

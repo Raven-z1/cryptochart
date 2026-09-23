@@ -380,6 +380,23 @@ var dom = {
   aiInvalidationText: document.getElementById('ai-invalidation-text'),
   btnAiDrawChart: document.getElementById('btn-ai-draw-chart'),
   btnAiExecuteOrder: document.getElementById('btn-ai-execute-order'),
+  btnTestAiConfig: document.getElementById('btn-test-ai-config'),
+  btnClearAiConfig: document.getElementById('btn-clear-ai-config'),
+  aiSheetTestResult: document.getElementById('ai-sheet-test-result'),
+
+  // Unified API Sheet Tabs & UnoRouter Modal Elements
+  tabBtnBinance: document.getElementById('tab-btn-binance'),
+  tabBtnUnoRouter: document.getElementById('tab-btn-unorouter'),
+  panelApiBinance: document.getElementById('panel-api-binance'),
+  panelApiUnoRouter: document.getElementById('panel-api-unorouter'),
+  unoModalBaseInput: document.getElementById('uno-modal-base-input'),
+  unoModalKeyInput: document.getElementById('uno-modal-key-input'),
+  btnToggleUnoModalVis: document.getElementById('btn-toggle-uno-modal-vis'),
+  unoModalModelInput: document.getElementById('uno-modal-model-input'),
+  unoModalTestResult: document.getElementById('uno-modal-test-result'),
+  btnUnoModalClear: document.getElementById('btn-uno-modal-clear'),
+  btnUnoModalTest: document.getElementById('btn-uno-modal-test'),
+  btnUnoModalSave: document.getElementById('btn-uno-modal-save'),
 };
 
 
