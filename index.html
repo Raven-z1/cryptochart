@@ -31,11 +31,11 @@
 
   <!-- Modular Stylesheets -->
   <!-- Cache-busted asset URLs (?v=) so clients always fetch the latest CSS/JS after a deploy -->
-  <link rel="stylesheet" href="css/base.css?v=20260923">
-  <link rel="stylesheet" href="css/chart.css?v=20260923">
-  <link rel="stylesheet" href="css/position-tool.css?v=20260923">
-  <link rel="stylesheet" href="css/sheets.css?v=20260923">
-  <link rel="stylesheet" href="css/ai-agent.css?v=20260923">
+  <link rel="stylesheet" href="css/base.css?v=20260923-2">
+  <link rel="stylesheet" href="css/chart.css?v=20260923-2">
+  <link rel="stylesheet" href="css/position-tool.css?v=20260923-2">
+  <link rel="stylesheet" href="css/sheets.css?v=20260923-2">
+  <link rel="stylesheet" href="css/ai-agent.css?v=20260923-2">
 </head>
 <body>
 
@@ -66,8 +66,8 @@
           <span id="ws-status-text">5m LIVE</span>
         </div>
 
-        <!-- UnoRouter AI Agent Setup -->
-        <button class="icon-touch-btn" id="btn-ai-agent-header" title="UnoRouter AI Agent Setup & Analysis">
+        <!-- OpenRouter AI Agent Setup -->
+        <button class="icon-touch-btn" id="btn-ai-agent-header" title="OpenRouter AI Agent Setup & Analysis">
           <span>🤖</span>
         </button>
 
@@ -157,7 +157,7 @@
             <span class="pos-icon">▼</span>
             <span class="pos-lbl">Short</span>
           </button>
-          <button type="button" class="tv-pos-btn tv-pos-ai" id="btn-pos-ai" title="AI Agent Trade Setup (UnoRouter)">
+          <button type="button" class="tv-pos-btn tv-pos-ai" id="btn-pos-ai" title="AI Agent Trade Setup (OpenRouter)">
             <span class="pos-icon">✨</span>
             <span class="pos-lbl">AI Agent</span>
           </button>
@@ -651,15 +651,15 @@
       </div>
 
       <div class="api-sheet-body">
-        <!-- Tabs: Binance vs UnoRouter -->
+        <!-- Tabs: Binance vs OpenRouter -->
         <div class="api-config-tabs">
           <button type="button" class="api-config-tab-btn active" data-tab="binance" id="tab-btn-binance">
             <span>🔑</span>
             <span>Binance Futures</span>
           </button>
-          <button type="button" class="api-config-tab-btn" data-tab="unorouter" id="tab-btn-unorouter">
+          <button type="button" class="api-config-tab-btn" data-tab="openrouter" id="tab-btn-openrouter">
             <span>🤖</span>
-            <span>UnoRouter AI</span>
+            <span>OpenRouter AI</span>
           </button>
         </div>
 
@@ -717,50 +717,50 @@
           </div>
         </div>
 
-        <!-- 2. UnoRouter Tab Content -->
-        <div class="api-tab-panel hidden" id="panel-api-unorouter">
+        <!-- 2. OpenRouter Tab Content -->
+        <div class="api-tab-panel hidden" id="panel-api-openrouter">
           <div class="api-security-notice" style="background: rgba(168, 85, 247, 0.12); border-color: rgba(168, 85, 247, 0.3); color: #d8b4fe;">
             <span class="security-icon">🔒</span>
-            <span>Your UnoRouter API Key is stored <strong>strictly locally</strong> in your browser storage (<code style="background: rgba(0,0,0,0.3); padding: 1px 4px; border-radius: 3px;">localStorage</code>). Sent only to your UnoRouter gateway over TLS.</span>
+            <span>Your OpenRouter API Key is stored <strong>strictly locally</strong> in your browser storage (<code style="background: rgba(0,0,0,0.3); padding: 1px 4px; border-radius: 3px;">localStorage</code>). Sent only to your OpenRouter gateway over TLS.</span>
           </div>
 
           <!-- Gateway Base URL Input -->
           <div class="api-input-group">
-            <label for="uno-modal-base-input" class="confirm-field-lbl">UnoRouter Gateway Base URL:</label>
-            <input type="text" id="uno-modal-base-input" class="api-text-input" placeholder="https://api.unorouter.com/v1" value="https://api.unorouter.com/v1">
-            <span class="api-input-hint">OpenAI-compatible AI gateway. Default: <code>https://api.unorouter.com/v1</code></span>
+            <label for="openrouter-modal-base-input" class="confirm-field-lbl">OpenRouter Gateway Base URL:</label>
+            <input type="text" id="openrouter-modal-base-input" class="api-text-input" placeholder="https://openrouter.ai/api/v1" value="https://openrouter.ai/api/v1">
+            <span class="api-input-hint">OpenAI-compatible AI gateway. Default: <code>https://openrouter.ai/api/v1</code></span>
           </div>
 
-          <!-- UnoRouter API Key Input -->
+          <!-- OpenRouter API Key Input -->
           <div class="api-input-group">
-            <label for="uno-modal-key-input" class="confirm-field-lbl">UnoRouter API Key:</label>
+            <label for="openrouter-modal-key-input" class="confirm-field-lbl">OpenRouter API Key:</label>
             <div class="api-input-wrap">
-              <input type="password" id="uno-modal-key-input" class="api-text-input" placeholder="Paste your UnoRouter API Key (sk-...)" autocomplete="off">
-              <button type="button" class="api-toggle-vis" id="btn-toggle-uno-modal-vis" title="Toggle visibility">👁</button>
+              <input type="password" id="openrouter-modal-key-input" class="api-text-input" placeholder="Paste your OpenRouter API Key (sk-or-...)" autocomplete="off">
+              <button type="button" class="api-toggle-vis" id="btn-toggle-openrouter-modal-vis" title="Toggle visibility">👁</button>
             </div>
-            <span class="api-input-hint">Get an API key from <a href="https://unorouter.com" target="_blank" rel="noopener" style="color: #c084fc; text-decoration: underline;">unorouter.com</a>. Stored locally in browser.</span>
+            <span class="api-input-hint">Get an API key from <a href="https://openrouter.ai" target="_blank" rel="noopener" style="color: #c084fc; text-decoration: underline;">openrouter.ai</a>. Stored locally in browser.</span>
           </div>
 
           <!-- Model Picker -->
           <div class="api-input-group">
             <label class="confirm-field-lbl">Select AI Model:</label>
             <div class="ai-model-chips">
-              <button type="button" class="ai-model-chip active" data-model="gpt-4o-mini">gpt-4o-mini</button>
-              <button type="button" class="ai-model-chip" data-model="gpt-4o">gpt-4o</button>
-              <button type="button" class="ai-model-chip" data-model="claude-3-5-sonnet">claude-3-5-sonnet</button>
-              <button type="button" class="ai-model-chip" data-model="deepseek-chat">deepseek-chat</button>
+              <button type="button" class="ai-model-chip active" data-model="openai/gpt-4o-mini">gpt-4o-mini</button>
+              <button type="button" class="ai-model-chip" data-model="openai/gpt-4o">gpt-4o</button>
+              <button type="button" class="ai-model-chip" data-model="anthropic/claude-3.5-sonnet">claude-3-5-sonnet</button>
+              <button type="button" class="ai-model-chip" data-model="deepseek/deepseek-chat">deepseek-chat</button>
             </div>
-            <input type="text" id="uno-modal-model-input" class="api-text-input" placeholder="Custom Model ID..." value="gpt-4o-mini" style="margin-top: 6px;">
+            <input type="text" id="openrouter-modal-model-input" class="api-text-input" placeholder="Custom Model ID (e.g. openai/gpt-4o-mini)..." value="openai/gpt-4o-mini" style="margin-top: 6px;">
           </div>
 
-          <!-- UnoRouter Connection Test Result Badge -->
-          <div class="api-test-result hidden" id="uno-modal-test-result"></div>
+          <!-- OpenRouter Connection Test Result Badge -->
+          <div class="api-test-result hidden" id="openrouter-modal-test-result"></div>
 
-          <!-- UnoRouter Modal Actions -->
+          <!-- OpenRouter Modal Actions -->
           <div class="api-sheet-actions">
-            <button type="button" class="pos-btn-cancel" id="btn-uno-modal-clear" style="color: var(--color-bear);">Disconnect</button>
-            <button type="button" class="pos-sheet-preset" id="btn-uno-modal-test" style="height: 40px; padding: 0 14px; font-size: 12px;">Test Connection</button>
-            <button type="button" class="pos-btn-apply" id="btn-uno-modal-save" style="background: linear-gradient(135deg, #a855f7, #6366f1); border-color: #c084fc;">Save to Browser</button>
+            <button type="button" class="pos-btn-cancel" id="btn-openrouter-modal-clear" style="color: var(--color-bear);">Disconnect</button>
+            <button type="button" class="pos-sheet-preset" id="btn-openrouter-modal-test" style="height: 40px; padding: 0 14px; font-size: 12px;">Test Connection</button>
+            <button type="button" class="pos-btn-apply" id="btn-openrouter-modal-save" style="background: linear-gradient(135deg, #a855f7, #6366f1); border-color: #c084fc;">Save to Browser</button>
           </div>
         </div>
       </div>
@@ -993,14 +993,14 @@
     </div>
   </div>
 
-  <!-- UnoRouter AI Agent Bottom Sheet -->
+  <!-- OpenRouter AI Agent Bottom Sheet -->
   <div class="sheet-backdrop" id="ai-sheet-backdrop">
     <div class="bottom-sheet" id="ai-sheet">
       <div class="sheet-drag-handle"></div>
       <div class="sheet-header">
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 18px;">🤖</span>
-          <span class="sheet-title">UnoRouter AI Agent</span>
+          <span class="sheet-title">OpenRouter AI Agent</span>
         </div>
         <button class="sheet-close-btn" id="ai-sheet-close">&times;</button>
       </div>
@@ -1013,7 +1013,7 @@
             <span id="ai-gateway-status-text">API Key Required</span>
           </div>
           <div style="display: flex; align-items: center; gap: 6px;">
-            <span class="ai-gateway-model-tag" id="ai-model-current-badge">gpt-4o-mini</span>
+            <span class="ai-gateway-model-tag" id="ai-model-current-badge">openai/gpt-4o-mini</span>
             <button type="button" class="btn-toggle-config" id="btn-toggle-ai-config" title="Toggle Gateway Settings">⚙</button>
           </div>
         </div>
@@ -1021,33 +1021,33 @@
         <!-- Collapsible Gateway Settings Card -->
         <div class="ai-config-card" id="ai-config-card">
           <div class="ai-config-title">
-            <span>⚙️ UnoRouter Gateway Configuration</span>
+            <span>⚙️ OpenRouter Gateway Configuration</span>
             <span style="font-size: 10px; color: var(--text-muted);">OpenAI-Compatible</span>
           </div>
 
           <div class="api-input-group">
             <label class="confirm-field-lbl" for="ai-gateway-base-input">Gateway Base URL:</label>
-            <input type="text" id="ai-gateway-base-input" class="api-text-input" placeholder="https://api.unorouter.com/v1" value="https://api.unorouter.com/v1">
+            <input type="text" id="ai-gateway-base-input" class="api-text-input" placeholder="https://openrouter.ai/api/v1" value="https://openrouter.ai/api/v1">
           </div>
 
           <div class="api-input-group">
-            <label class="confirm-field-lbl" for="ai-key-input">UnoRouter API Key:</label>
+            <label class="confirm-field-lbl" for="ai-key-input">OpenRouter API Key:</label>
             <div class="api-input-wrap">
-              <input type="password" id="ai-key-input" class="api-text-input" placeholder="Paste UnoRouter API Key..." autocomplete="off">
+              <input type="password" id="ai-key-input" class="api-text-input" placeholder="Paste OpenRouter API Key..." autocomplete="off">
               <button type="button" class="api-toggle-vis" id="btn-toggle-ai-key-vis" title="Toggle visibility">👁</button>
             </div>
-            <span class="api-input-hint">Get your key at <a href="https://unorouter.com" target="_blank" rel="noopener" style="color: #c084fc; text-decoration: underline;">unorouter.com</a>. Stored locally in your browser.</span>
+            <span class="api-input-hint">Get your key at <a href="https://openrouter.ai" target="_blank" rel="noopener" style="color: #c084fc; text-decoration: underline;">openrouter.ai</a>. Stored locally in your browser.</span>
           </div>
 
           <div class="api-input-group">
             <label class="confirm-field-lbl">Select or Type AI Model:</label>
             <div class="ai-model-chips">
-              <button type="button" class="ai-model-chip active" data-model="gpt-4o-mini">gpt-4o-mini</button>
-              <button type="button" class="ai-model-chip" data-model="gpt-4o">gpt-4o</button>
-              <button type="button" class="ai-model-chip" data-model="claude-3-5-sonnet">claude-3-5-sonnet</button>
-              <button type="button" class="ai-model-chip" data-model="deepseek-chat">deepseek-chat</button>
+              <button type="button" class="ai-model-chip active" data-model="openai/gpt-4o-mini">gpt-4o-mini</button>
+              <button type="button" class="ai-model-chip" data-model="openai/gpt-4o">gpt-4o</button>
+              <button type="button" class="ai-model-chip" data-model="anthropic/claude-3.5-sonnet">claude-3-5-sonnet</button>
+              <button type="button" class="ai-model-chip" data-model="deepseek/deepseek-chat">deepseek-chat</button>
             </div>
-            <input type="text" id="ai-model-input" class="api-text-input" placeholder="Custom Model (e.g. gpt-4o, claude-3-5-sonnet)..." value="gpt-4o-mini" style="margin-top: 6px;">
+            <input type="text" id="ai-model-input" class="api-text-input" placeholder="Custom Model (e.g. gpt-4o, claude-3-5-sonnet)..." value="openai/gpt-4o-mini" style="margin-top: 6px;">
           </div>
 
           <!-- Test Result Badge -->
@@ -1099,7 +1099,7 @@
         <div class="ai-loading-card hidden" id="ai-loading-card">
           <div class="ai-spinner"></div>
           <div class="ai-loading-text" id="ai-loading-text">Analyzing BTCUSDT (5m)...</div>
-          <div class="ai-loading-subtext" id="ai-loading-subtext">Connecting to UnoRouter gateway...</div>
+          <div class="ai-loading-subtext" id="ai-loading-subtext">Connecting to OpenRouter gateway...</div>
         </div>
 
         <!-- AI Trade Recommendation Result Card -->
@@ -1155,8 +1155,8 @@
             <span style="font-size: 10px; color: #a855f7;">Show / Hide</span>
           </div>
           <div class="hidden" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
-            <span style="color: var(--text-muted); font-size: 10.5px;">External Python/Node agents using UnoRouter can draw positions programmatically:</span>
-            <div class="ai-dev-code">window.drawAiPosition({ type: 'long', entry: 64200, tp: 65500, sl: 63800, note: 'UnoRouter Bot' });</div>
+            <span style="color: var(--text-muted); font-size: 10.5px;">External Python/Node agents using OpenRouter can draw positions programmatically:</span>
+            <div class="ai-dev-code">window.drawAiPosition({ type: 'long', entry: 64200, tp: 65500, sl: 63800, note: 'OpenRouter Bot' });</div>
             <span style="color: var(--text-muted); font-size: 10.5px;">Or open with deep-link URL:</span>
             <div class="ai-dev-code">?symbol=BTCUSDT&amp;pos=long&amp;entry=64200&amp;tp=65500&amp;sl=63800</div>
           </div>
@@ -1170,14 +1170,14 @@
 
 
   <!-- Application Logic Modules -->
-  <script src="js/config.js?v=20260923"></script>
-  <script src="js/utils.js?v=20260923"></script>
-  <script src="js/chart.js?v=20260923"></script>
-  <script src="js/ui.js?v=20260923"></script>
-  <script src="js/position-tool.js?v=20260923"></script>
-  <script src="js/binance-api.js?v=20260923"></script>
-  <script src="js/positions-manager.js?v=20260923"></script>
-  <script src="js/ai-agent.js?v=20260923"></script>
-  <script src="js/app.js?v=20260923"></script>
+  <script src="js/config.js?v=20260923-2"></script>
+  <script src="js/utils.js?v=20260923-2"></script>
+  <script src="js/chart.js?v=20260923-2"></script>
+  <script src="js/ui.js?v=20260923-2"></script>
+  <script src="js/position-tool.js?v=20260923-2"></script>
+  <script src="js/binance-api.js?v=20260923-2"></script>
+  <script src="js/positions-manager.js?v=20260923-2"></script>
+  <script src="js/ai-agent.js?v=20260923-2"></script>
+  <script src="js/app.js?v=20260923-2"></script>
 </body>
 </html>

@@ -92,35 +92,35 @@ var state = {
   aiAgent: {
     gatewayUrl: (function () {
       try {
-        return localStorage.getItem('cc_unorouter_base') || 'https://api.unorouter.com/v1';
+        return localStorage.getItem('cc_openrouter_base') || 'https://openrouter.ai/api/v1';
       } catch (_) {
-        return 'https://api.unorouter.com/v1';
+        return 'https://openrouter.ai/api/v1';
       }
     })(),
     apiKey: (function () {
       try {
-        return localStorage.getItem('cc_unorouter_key') || '';
+        return localStorage.getItem('cc_openrouter_key') || '';
       } catch (_) {
         return '';
       }
     })(),
     model: (function () {
       try {
-        return localStorage.getItem('cc_unorouter_model') || 'gpt-4o-mini';
+        return localStorage.getItem('cc_openrouter_model') || 'openai/gpt-4o-mini';
       } catch (_) {
-        return 'gpt-4o-mini';
+        return 'openai/gpt-4o-mini';
       }
     })(),
     strategy: (function () {
       try {
-        return localStorage.getItem('cc_unorouter_strat') || 'scalp';
+        return localStorage.getItem('cc_openrouter_strat') || 'scalp';
       } catch (_) {
         return 'scalp';
       }
     })(),
     customPrompt: (function () {
       try {
-        return localStorage.getItem('cc_unorouter_prompt') || '';
+        return localStorage.getItem('cc_openrouter_prompt') || '';
       } catch (_) {
         return '';
       }
@@ -344,7 +344,7 @@ var dom = {
   posSecCount: document.getElementById('pos-sec-count'),
   openPositionsContainer: document.getElementById('open-positions-container'),
 
-  // UnoRouter AI Agent Sheet & Components
+  // OpenRouter AI Agent Sheet & Components
   aiBackdrop: document.getElementById('ai-sheet-backdrop'),
   aiSheet: document.getElementById('ai-sheet'),
   aiSheetClose: document.getElementById('ai-sheet-close'),
@@ -384,19 +384,19 @@ var dom = {
   btnClearAiConfig: document.getElementById('btn-clear-ai-config'),
   aiSheetTestResult: document.getElementById('ai-sheet-test-result'),
 
-  // Unified API Sheet Tabs & UnoRouter Modal Elements
+  // Unified API Sheet Tabs & OpenRouter Modal Elements
   tabBtnBinance: document.getElementById('tab-btn-binance'),
-  tabBtnUnoRouter: document.getElementById('tab-btn-unorouter'),
+  tabBtnOpenRouter: document.getElementById('tab-btn-openrouter'),
   panelApiBinance: document.getElementById('panel-api-binance'),
-  panelApiUnoRouter: document.getElementById('panel-api-unorouter'),
-  unoModalBaseInput: document.getElementById('uno-modal-base-input'),
-  unoModalKeyInput: document.getElementById('uno-modal-key-input'),
-  btnToggleUnoModalVis: document.getElementById('btn-toggle-uno-modal-vis'),
-  unoModalModelInput: document.getElementById('uno-modal-model-input'),
-  unoModalTestResult: document.getElementById('uno-modal-test-result'),
-  btnUnoModalClear: document.getElementById('btn-uno-modal-clear'),
-  btnUnoModalTest: document.getElementById('btn-uno-modal-test'),
-  btnUnoModalSave: document.getElementById('btn-uno-modal-save'),
+  panelApiOpenRouter: document.getElementById('panel-api-openrouter'),
+  openrouterModalBaseInput: document.getElementById('openrouter-modal-base-input'),
+  openrouterModalKeyInput: document.getElementById('openrouter-modal-key-input'),
+  btnToggleOpenRouterModalVis: document.getElementById('btn-toggle-openrouter-modal-vis'),
+  openrouterModalModelInput: document.getElementById('openrouter-modal-model-input'),
+  openrouterModalTestResult: document.getElementById('openrouter-modal-test-result'),
+  btnOpenRouterModalClear: document.getElementById('btn-openrouter-modal-clear'),
+  btnOpenRouterModalTest: document.getElementById('btn-openrouter-modal-test'),
+  btnOpenRouterModalSave: document.getElementById('btn-openrouter-modal-save'),
 };
 
 

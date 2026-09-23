@@ -289,20 +289,20 @@ function openApiSheet(initialTab = 'binance') {
   updateApiEnvDisplay();
 
   // Switch to selected tab
-  if (initialTab === 'unorouter') {
-    if (dom.tabBtnUnoRouter) dom.tabBtnUnoRouter.classList.add('active');
+  if (initialTab === 'openrouter') {
+    if (dom.tabBtnOpenRouter) dom.tabBtnOpenRouter.classList.add('active');
     if (dom.tabBtnBinance) dom.tabBtnBinance.classList.remove('active');
-    if (dom.panelApiUnoRouter) dom.panelApiUnoRouter.classList.remove('hidden');
+    if (dom.panelApiOpenRouter) dom.panelApiOpenRouter.classList.remove('hidden');
     if (dom.panelApiBinance) dom.panelApiBinance.classList.add('hidden');
   } else {
     if (dom.tabBtnBinance) dom.tabBtnBinance.classList.add('active');
-    if (dom.tabBtnUnoRouter) dom.tabBtnUnoRouter.classList.remove('active');
+    if (dom.tabBtnOpenRouter) dom.tabBtnOpenRouter.classList.remove('active');
     if (dom.panelApiBinance) dom.panelApiBinance.classList.remove('hidden');
-    if (dom.panelApiUnoRouter) dom.panelApiUnoRouter.classList.add('hidden');
+    if (dom.panelApiOpenRouter) dom.panelApiOpenRouter.classList.add('hidden');
   }
 
-  if (typeof window.syncUnoRouterInputs === 'function') {
-    window.syncUnoRouterInputs();
+  if (typeof window.syncOpenRouterInputs === 'function') {
+    window.syncOpenRouterInputs();
   }
 
   openSheet(dom.apiSheetBackdrop);
