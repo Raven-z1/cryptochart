@@ -710,6 +710,7 @@ function closeAllSheets() {
   if (dom.apiSheetBackdrop) dom.apiSheetBackdrop.classList.remove('open');
   if (dom.posListBackdrop) dom.posListBackdrop.classList.remove('open');
   if (dom.tfSheetBackdrop) dom.tfSheetBackdrop.classList.remove('open');
+  if (dom.aiBackdrop) dom.aiBackdrop.classList.remove('open');
 }
 
 // Android Fullscreen & Landscape Rotate Handler

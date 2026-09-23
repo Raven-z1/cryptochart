@@ -96,3 +96,46 @@ netlify dev
 ```
 
 Open `http://localhost:8000` in your browser.
+
+---
+
+## 🤖 UnoRouter AI Agent (Automated Long / Short with TP & SL)
+
+The chart includes a native AI Trading Agent integrated with **[UnoRouter](https://unorouter.com)** (OpenAI-compatible AI Gateway). The agent scans live candlestick price action, ATR, RSI, EMAs, and Bollinger Bands to formulate high-probability trade setups and automatically plots them on the chart with exact Entry, Take Profit, and Stop Loss brackets.
+
+### 1. In-App AI Agent
+1. Tap the **`✨ AI Agent`** button in the chart toolbar or the **`🤖`** button in the top app bar.
+2. Enter your **UnoRouter API Key** (from [unorouter.com](https://unorouter.com)).
+3. Select your model (e.g. `gpt-4o-mini`, `gpt-4o`, `claude-3-5-sonnet`, `deepseek-chat`).
+4. Choose an action:
+   - **`▲ AI Long Setup`**: Calculates an optimal Long entry, TP, and SL.
+   - **`▼ AI Short Setup`**: Calculates an optimal Short entry, TP, and SL.
+   - **`✨ Auto Trade Signal`**: Evaluates market structure to pick Long or Short automatically.
+   - **Custom Prompt**: Type instructions like *"Find a scalp long with tight stop loss below the 5m swing low"*.
+5. The setup is **immediately plotted on the chart** with full interactive drag handles, R:R badge, and 1-tap Binance order execution!
+
+### 2. Programmatic & External AI Agent API
+External agents, bots, or scripts can draw positions directly on the chart:
+
+#### JavaScript API:
+```javascript
+window.drawAiPosition({
+  type: 'long',        // 'long' | 'short'
+  entryPrice: 64250,  // optional, defaults to live price
+  tpPrice: 65800,     // Take Profit price
+  slPrice: 63500,     // Stop Loss price
+  note: 'UnoRouter Breakout'
+});
+```
+
+#### URL Deep-Link:
+```
+http://localhost:8000/index.html?symbol=BTCUSDT&pos=long&entry=64250&tp=65800&sl=63500&note=UnoRouter
+```
+
+#### Autonomous Python Agent:
+Run the standalone AI agent script powered by UnoRouter:
+```bash
+export UNOROUTER_API_KEY="your-unorouter-api-key"
+python3 agent/unorouter_agent.py --symbol BTCUSDT --timeframe 5m --direction auto --open
+```

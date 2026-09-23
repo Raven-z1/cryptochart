@@ -90,6 +90,65 @@ function drawPosition(type) {
   showToast(`${type.toUpperCase()} @ $${formatPrice(m.entry)} | TP: $${formatPrice(m.tp)} (+${m.tpPct.toFixed(2)}%) | SL: $${formatPrice(m.sl)} (-${m.slPct.toFixed(2)}%) | R:R ${m.rr.toFixed(2)}`);
 }
 
+function drawAiPosition(params) {
+  if (!params) return false;
+  haptic(25);
+  const type = ((params.type || params.signal || 'long') + '').toLowerCase().trim();
+  const isShort = type === 'short';
+  const curPrice = state.currentPrice || (state.rawCandles && state.rawCandles.length ? state.rawCandles[state.rawCandles.length - 1].close : 0);
+
+  let entry = parseFloat(params.entryPrice !== undefined ? params.entryPrice : (params.entry !== undefined ? params.entry : curPrice));
+  if (!entry || isNaN(entry) || entry <= 0) {
+    entry = curPrice;
+  }
+  if (!entry || isNaN(entry) || entry <= 0) {
+    showToast('Live price loading, please wait...');
+    return false;
+  }
+
+  let tp = parseFloat(params.tpPrice !== undefined ? params.tpPrice : (params.tp !== undefined ? params.tp : 0));
+  let sl = parseFloat(params.slPrice !== undefined ? params.slPrice : (params.sl !== undefined ? params.sl : 0));
+
+  if (!tp || isNaN(tp) || tp <= 0) {
+    tp = isShort ? entry * 0.98 : entry * 1.02;
+  }
+  if (!sl || isNaN(sl) || sl <= 0) {
+    sl = isShort ? entry * 1.01 : entry * 0.99;
+  }
+
+  // Ensure TP and SL are logically valid for the position direction
+  if (isShort) {
+    if (tp >= entry) tp = entry * 0.98;
+    if (sl <= entry) sl = entry * 1.01;
+  } else {
+    if (tp <= entry) tp = entry * 1.02;
+    if (sl >= entry) sl = entry * 0.99;
+  }
+
+  positionState.active = true;
+  positionState.type = isShort ? 'short' : 'long';
+  positionState.entryPrice = entry;
+  positionState.tpPrice = tp;
+  positionState.slPrice = sl;
+
+  const candleCount = state.rawCandles ? state.rawCandles.length : 0;
+  const lastIdx = Math.max(0, candleCount - 1);
+  positionState.startLogical = (typeof params.startLogical === 'number') ? params.startLogical : Math.max(0, lastIdx - 4);
+  positionState.endLogical = (typeof params.endLogical === 'number') ? params.endLogical : (lastIdx + 24);
+  positionState.startTime = (candleCount > 0 && positionState.startLogical < candleCount) ? state.rawCandles[positionState.startLogical].time : null;
+
+  updatePositionUI();
+  const m = getPositionMetrics();
+  const tag = params.note || (params.strategy ? `AI: ${params.strategy}` : 'AI Position');
+  showToast(`🤖 ${tag} | ${positionState.type.toUpperCase()} @ $${formatPrice(m.entry)} | TP: $${formatPrice(m.tp)} (+${m.tpPct.toFixed(2)}%) | SL: $${formatPrice(m.sl)} (-${m.slPct.toFixed(2)}%) | R:R ${m.rr.toFixed(2)}`);
+
+  if (params.autoOpenConfirm && typeof window.openOrderConfirmationSheet === 'function') {
+    window.openOrderConfirmationSheet();
+  }
+
+  return true;
+}
+
 function renderPositionOverlay() {
   if (!dom.tvPosGroup) return;
   if (!positionState.active) {
@@ -1030,6 +1089,7 @@ if (dom.chartContainer) {
 window.positionState = positionState;
 window.getPositionMetrics = getPositionMetrics;
 window.drawPosition = drawPosition;
+window.drawAiPosition = drawAiPosition;
 window.renderPositionOverlay = renderPositionOverlay;
 window.syncPriceLines = syncPriceLines;
 window.clearPriceLines = clearPriceLines;

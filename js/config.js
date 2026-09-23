@@ -89,6 +89,45 @@ var state = {
     leverage: 10,
     riskPct: 5,
   },
+  aiAgent: {
+    gatewayUrl: (function () {
+      try {
+        return localStorage.getItem('cc_unorouter_base') || 'https://api.unorouter.com/v1';
+      } catch (_) {
+        return 'https://api.unorouter.com/v1';
+      }
+    })(),
+    apiKey: (function () {
+      try {
+        return localStorage.getItem('cc_unorouter_key') || '';
+      } catch (_) {
+        return '';
+      }
+    })(),
+    model: (function () {
+      try {
+        return localStorage.getItem('cc_unorouter_model') || 'gpt-4o-mini';
+      } catch (_) {
+        return 'gpt-4o-mini';
+      }
+    })(),
+    strategy: (function () {
+      try {
+        return localStorage.getItem('cc_unorouter_strat') || 'scalp';
+      } catch (_) {
+        return 'scalp';
+      }
+    })(),
+    customPrompt: (function () {
+      try {
+        return localStorage.getItem('cc_unorouter_prompt') || '';
+      } catch (_) {
+        return '';
+      }
+    })(),
+    lastResult: null,
+    isAnalyzing: false,
+  },
 };
 
 // Synchronize Heikin-Ashi initial state with chartStyle
@@ -177,6 +216,8 @@ var dom = {
   chartPosToolbar: document.getElementById('chart-pos-toolbar'),
   btnPosLong: document.getElementById('btn-pos-long'),
   btnPosShort: document.getElementById('btn-pos-short'),
+  btnPosAi: document.getElementById('btn-pos-ai'),
+  btnAiAgentHeader: document.getElementById('btn-ai-agent-header'),
   posHudActive: document.getElementById('pos-hud-active'),
   posHudTag: document.getElementById('pos-hud-tag'),
   posHudRr: document.getElementById('pos-hud-rr'),
@@ -302,6 +343,43 @@ var dom = {
   balAvailable: document.getElementById('bal-available'),
   posSecCount: document.getElementById('pos-sec-count'),
   openPositionsContainer: document.getElementById('open-positions-container'),
+
+  // UnoRouter AI Agent Sheet & Components
+  aiBackdrop: document.getElementById('ai-sheet-backdrop'),
+  aiSheet: document.getElementById('ai-sheet'),
+  aiSheetClose: document.getElementById('ai-sheet-close'),
+  btnToggleAiConfig: document.getElementById('btn-toggle-ai-config'),
+  aiConfigCard: document.getElementById('ai-config-card'),
+  aiGatewayBaseInput: document.getElementById('ai-gateway-base-input'),
+  aiKeyInput: document.getElementById('ai-key-input'),
+  btnToggleAiKeyVis: document.getElementById('btn-toggle-ai-key-vis'),
+  aiModelInput: document.getElementById('ai-model-input'),
+  btnSaveAiConfig: document.getElementById('btn-save-ai-config'),
+  aiGatewayStatusDot: document.getElementById('ai-gateway-status-dot'),
+  aiGatewayStatusText: document.getElementById('ai-gateway-status-text'),
+  aiModelCurrentBadge: document.getElementById('ai-model-current-badge'),
+  btnAiLong: document.getElementById('btn-ai-long'),
+  btnAiShort: document.getElementById('btn-ai-short'),
+  btnAiAuto: document.getElementById('btn-ai-auto'),
+  aiPromptInput: document.getElementById('ai-prompt-input'),
+  btnAiRunCustom: document.getElementById('btn-ai-run-custom'),
+  aiLoadingCard: document.getElementById('ai-loading-card'),
+  aiLoadingText: document.getElementById('ai-loading-text'),
+  aiLoadingSubtext: document.getElementById('ai-loading-subtext'),
+  aiResultCard: document.getElementById('ai-result-card'),
+  aiSignalBadge: document.getElementById('ai-signal-badge'),
+  aiConfBadge: document.getElementById('ai-conf-badge'),
+  aiResEntry: document.getElementById('ai-res-entry'),
+  aiResTp: document.getElementById('ai-res-tp'),
+  aiResTpPct: document.getElementById('ai-res-tp-pct'),
+  aiResSl: document.getElementById('ai-res-sl'),
+  aiResSlPct: document.getElementById('ai-res-sl-pct'),
+  aiResRr: document.getElementById('ai-res-rr'),
+  aiRationaleTitle: document.getElementById('ai-rationale-title'),
+  aiRationaleText: document.getElementById('ai-rationale-text'),
+  aiInvalidationText: document.getElementById('ai-invalidation-text'),
+  btnAiDrawChart: document.getElementById('btn-ai-draw-chart'),
+  btnAiExecuteOrder: document.getElementById('btn-ai-execute-order'),
 };
 
 

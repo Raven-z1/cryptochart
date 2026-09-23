@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="css/chart.css">
   <link rel="stylesheet" href="css/position-tool.css">
   <link rel="stylesheet" href="css/sheets.css">
+  <link rel="stylesheet" href="css/ai-agent.css">
 </head>
 <body>
 
@@ -63,6 +64,11 @@
           <div class="status-dot"></div>
           <span id="ws-status-text">5m LIVE</span>
         </div>
+
+        <!-- UnoRouter AI Agent Setup -->
+        <button class="icon-touch-btn" id="btn-ai-agent-header" title="UnoRouter AI Agent Setup & Analysis">
+          <span>🤖</span>
+        </button>
 
         <!-- Binance API Key Setup -->
         <button class="icon-touch-btn" id="btn-api-settings" title="Binance API Key Settings">
@@ -149,6 +155,10 @@
           <button type="button" class="tv-pos-btn tv-pos-short" id="btn-pos-short" title="Draw Short Position at Current Price">
             <span class="pos-icon">▼</span>
             <span class="pos-lbl">Short</span>
+          </button>
+          <button type="button" class="tv-pos-btn tv-pos-ai" id="btn-pos-ai" title="AI Agent Trade Setup (UnoRouter)">
+            <span class="pos-icon">✨</span>
+            <span class="pos-lbl">AI Agent</span>
           </button>
           <!-- Active Position HUD -->
           <div class="pos-hud-active hidden" id="pos-hud-active">
@@ -919,6 +929,173 @@
     </div>
   </div>
 
+  <!-- UnoRouter AI Agent Bottom Sheet -->
+  <div class="sheet-backdrop" id="ai-sheet-backdrop">
+    <div class="bottom-sheet" id="ai-sheet">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 18px;">🤖</span>
+          <span class="sheet-title">UnoRouter AI Agent</span>
+        </div>
+        <button class="sheet-close-btn" id="ai-sheet-close">&times;</button>
+      </div>
+
+      <div class="ai-sheet-body">
+        <!-- Gateway Status Banner -->
+        <div class="ai-gateway-banner">
+          <div class="ai-gateway-status">
+            <span class="ai-dot warning" id="ai-gateway-status-dot"></span>
+            <span id="ai-gateway-status-text">API Key Required</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span class="ai-gateway-model-tag" id="ai-model-current-badge">gpt-4o-mini</span>
+            <button type="button" class="btn-toggle-config" id="btn-toggle-ai-config" title="Toggle Gateway Settings">⚙</button>
+          </div>
+        </div>
+
+        <!-- Collapsible Gateway Settings Card -->
+        <div class="ai-config-card" id="ai-config-card">
+          <div class="ai-config-title">
+            <span>⚙️ UnoRouter Gateway Configuration</span>
+            <span style="font-size: 10px; color: var(--text-muted);">OpenAI-Compatible</span>
+          </div>
+
+          <div class="api-input-group">
+            <label class="confirm-field-lbl" for="ai-gateway-base-input">Gateway Base URL:</label>
+            <input type="text" id="ai-gateway-base-input" class="api-text-input" placeholder="https://api.unorouter.com/v1" value="https://api.unorouter.com/v1">
+          </div>
+
+          <div class="api-input-group">
+            <label class="confirm-field-lbl" for="ai-key-input">UnoRouter API Key:</label>
+            <div class="api-input-wrap">
+              <input type="password" id="ai-key-input" class="api-text-input" placeholder="Paste UnoRouter API Key..." autocomplete="off">
+              <button type="button" class="api-toggle-vis" id="btn-toggle-ai-key-vis" title="Toggle visibility">👁</button>
+            </div>
+            <span class="api-input-hint">Get your key at <a href="https://unorouter.com" target="_blank" rel="noopener" style="color: #c084fc; text-decoration: underline;">unorouter.com</a>. Stored locally in your browser.</span>
+          </div>
+
+          <div class="api-input-group">
+            <label class="confirm-field-lbl">Select or Type AI Model:</label>
+            <div class="ai-model-chips">
+              <button type="button" class="ai-model-chip active" data-model="gpt-4o-mini">gpt-4o-mini</button>
+              <button type="button" class="ai-model-chip" data-model="gpt-4o">gpt-4o</button>
+              <button type="button" class="ai-model-chip" data-model="claude-3-5-sonnet">claude-3-5-sonnet</button>
+              <button type="button" class="ai-model-chip" data-model="deepseek-chat">deepseek-chat</button>
+            </div>
+            <input type="text" id="ai-model-input" class="api-text-input" placeholder="Custom Model (e.g. gpt-4o, claude-3-5-sonnet)..." value="gpt-4o-mini" style="margin-top: 6px;">
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+            <button type="button" class="pos-btn-apply" id="btn-save-ai-config" style="height: 36px; padding: 0 16px; font-size: 12px;">Save Gateway Config</button>
+          </div>
+        </div>
+
+        <!-- Strategy Style Picker -->
+        <div class="ai-strategy-section">
+          <span class="ai-section-lbl">Trading Strategy Style</span>
+          <div class="ai-strategy-pills">
+            <button type="button" class="ai-strat-pill active" data-strat="scalp">⚡ 5m Scalp &amp; ATR</button>
+            <button type="button" class="ai-strat-pill" data-strat="breakout">🚀 Momentum Breakout</button>
+            <button type="button" class="ai-strat-pill" data-strat="orderblock">🧱 Order Block &amp; FVG</button>
+            <button type="button" class="ai-strat-pill" data-strat="pullback">📈 EMA Pullback</button>
+            <button type="button" class="ai-strat-pill" data-strat="reversion">🔄 Mean Reversion (BB)</button>
+          </div>
+        </div>
+
+        <!-- Quick AI Action Triggers -->
+        <div class="ai-quick-triggers">
+          <button type="button" class="ai-action-btn ai-action-long" id="btn-ai-long" title="Generate AI Long Trade Setup">
+            <span>▲</span>
+            <span>AI Long Setup</span>
+          </button>
+          <button type="button" class="ai-action-btn ai-action-short" id="btn-ai-short" title="Generate AI Short Trade Setup">
+            <span>▼</span>
+            <span>AI Short Setup</span>
+          </button>
+          <button type="button" class="ai-action-btn ai-action-auto" id="btn-ai-auto" title="Let AI determine best direction and setup">
+            <span>✨</span>
+            <span>Auto Trade Signal (Long/Short)</span>
+          </button>
+        </div>
+
+        <!-- Custom Query Input -->
+        <div class="ai-custom-input-wrap">
+          <label class="ai-section-lbl" for="ai-prompt-input">Custom Instructions / Questions (Optional):</label>
+          <textarea id="ai-prompt-input" class="ai-prompt-textarea" placeholder="e.g. Look for liquidity sweep near 24h low and set long with tight SL..."></textarea>
+          <button type="button" class="pos-sheet-preset" id="btn-ai-run-custom" style="height: 36px; font-weight: 700; font-size: 12px; background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.4); color: #d8b4fe;">💬 Run Custom AI Analysis</button>
+        </div>
+
+        <!-- Loading State Card -->
+        <div class="ai-loading-card hidden" id="ai-loading-card">
+          <div class="ai-spinner"></div>
+          <div class="ai-loading-text" id="ai-loading-text">Analyzing BTCUSDT (5m)...</div>
+          <div class="ai-loading-subtext" id="ai-loading-subtext">Connecting to UnoRouter gateway...</div>
+        </div>
+
+        <!-- AI Trade Recommendation Result Card -->
+        <div class="ai-result-card hidden" id="ai-result-card">
+          <div class="ai-result-header">
+            <span class="ai-signal-badge long" id="ai-signal-badge">▲ LONG</span>
+            <span class="ai-conf-badge" id="ai-conf-badge">85% Conf</span>
+          </div>
+
+          <!-- Price & Target Metrics Grid -->
+          <div class="ai-price-grid">
+            <div class="ai-grid-item">
+              <span class="ai-grid-lbl">Entry Price</span>
+              <span class="ai-grid-val" id="ai-res-entry">$0.00</span>
+              <span class="ai-grid-sub" style="color: var(--text-dim);">Market</span>
+            </div>
+            <div class="ai-grid-item">
+              <span class="ai-grid-lbl">Take Profit (TP)</span>
+              <span class="ai-grid-val bull" id="ai-res-tp">$0.00</span>
+              <span class="ai-grid-sub bull" id="ai-res-tp-pct">+0.00%</span>
+            </div>
+            <div class="ai-grid-item">
+              <span class="ai-grid-lbl">Stop Loss (SL)</span>
+              <span class="ai-grid-val bear" id="ai-res-sl">$0.00</span>
+              <span class="ai-grid-sub bear" id="ai-res-sl-pct">-0.00%</span>
+            </div>
+          </div>
+
+          <!-- Risk / Reward Metric -->
+          <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Risk-to-Reward Ratio</span>
+            <span style="font-size: 13px; font-family: var(--font-mono); font-weight: 800; color: var(--binance-gold);" id="ai-res-rr">1:2.00</span>
+          </div>
+
+          <!-- Strategy & Rationale -->
+          <div class="ai-rationale-box">
+            <span class="ai-rationale-title" id="ai-rationale-title">Strategy: Scalp Breakout</span>
+            <span class="ai-rationale-text" id="ai-rationale-text">Analysis explanation...</span>
+            <span class="ai-invalidation-text" id="ai-invalidation-text">Invalidation: Level break</span>
+          </div>
+
+          <!-- Result Actions -->
+          <div class="ai-result-actions">
+            <button type="button" class="ai-btn-draw" id="btn-ai-draw-chart">🎯 Draw on Chart</button>
+            <button type="button" class="ai-btn-execute" id="btn-ai-execute-order">⚡ Open on Binance</button>
+          </div>
+        </div>
+
+        <!-- External Agent Integration Info Card -->
+        <div class="ai-dev-card">
+          <div class="ai-dev-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
+            <span>📡 External AI Agent &amp; API Integration</span>
+            <span style="font-size: 10px; color: #a855f7;">Show / Hide</span>
+          </div>
+          <div class="hidden" style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+            <span style="color: var(--text-muted); font-size: 10.5px;">External Python/Node agents using UnoRouter can draw positions programmatically:</span>
+            <div class="ai-dev-code">window.drawAiPosition({ type: 'long', entry: 64200, tp: 65500, sl: 63800, note: 'UnoRouter Bot' });</div>
+            <span style="color: var(--text-muted); font-size: 10.5px;">Or open with deep-link URL:</span>
+            <div class="ai-dev-code">?symbol=BTCUSDT&amp;pos=long&amp;entry=64200&amp;tp=65500&amp;sl=63800</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Android Native Toast Notification -->
   <div class="android-toast" id="android-toast">Ready</div>
 
@@ -931,6 +1108,7 @@
   <script src="js/position-tool.js"></script>
   <script src="js/binance-api.js"></script>
   <script src="js/positions-manager.js"></script>
+  <script src="js/ai-agent.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
