@@ -1066,11 +1066,32 @@
   display: none !important;
 }
 
+#api-sheet {
+  max-height: 90vh;
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+}
+
 .api-sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding-top: 6px;
+  padding: 10px 16px calc(24px + env(safe-area-inset-bottom, 16px)) 16px;
+}
+
+.api-sheet-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.api-sheet-body::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
 }
 .api-security-notice {
   display: flex;
@@ -1159,7 +1180,8 @@
   border: 1px solid var(--color-bull);
   color: var(--color-bull);
 }
-.api-test-result.error {
+.api-test-result.error,
+.api-test-result.fail {
   background: rgba(246, 70, 93, 0.15);
   border: 1px solid var(--color-bear);
   color: #ff6b7e;
@@ -1167,7 +1189,51 @@
 .api-sheet-actions {
   display: flex;
   gap: 10px;
-  margin-top: 4px;
+  margin-top: 6px;
+}
+
+@media (max-width: 480px) {
+  .api-sheet-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .api-sheet-actions #btn-uno-modal-save,
+  .api-sheet-actions #btn-api-save {
+    grid-column: span 2;
+    order: -1;
+    height: 42px;
+    font-size: 13px;
+    width: 100%;
+  }
+  .api-sheet-actions #btn-uno-modal-test,
+  .api-sheet-actions #btn-api-test {
+    grid-column: span 1;
+    height: 38px;
+    width: 100%;
+    padding: 0 6px;
+    font-size: 11.5px;
+  }
+  .api-sheet-actions #btn-uno-modal-clear,
+  .api-sheet-actions #btn-api-clear {
+    grid-column: span 1;
+    height: 38px;
+    width: 100%;
+    padding: 0 6px;
+    font-size: 11.5px;
+  }
+}
+
+@media (max-width: 768px) {
+  .api-text-input {
+    font-size: 13px;
+    height: 40px;
+    touch-action: manipulation;
+  }
+  .api-toggle-vis {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 /* Binance Positions & Balance Bottom Sheet Styles */

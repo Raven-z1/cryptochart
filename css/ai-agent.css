@@ -36,7 +36,8 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 12px 16px 20px 16px;
+  overscroll-behavior: contain;
+  padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 16px)) 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -176,6 +177,12 @@
   border-color: #a855f7;
   color: #f3e8ff;
   box-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
+.ai-config-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 /* Quick Action Triggers */
@@ -577,4 +584,55 @@
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+/* ==========================================================================
+   Mobile Responsive Adjustments for AI Agent Sheet
+   ========================================================================== */
+@media (max-width: 480px) {
+  .ai-sheet-body {
+    padding: 10px 12px calc(24px + env(safe-area-inset-bottom, 16px)) 12px;
+    gap: 10px;
+  }
+
+  .ai-config-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .ai-config-actions #btn-save-ai-config {
+    grid-column: span 2;
+    order: -1;
+    height: 40px;
+    font-size: 13px;
+    width: 100%;
+  }
+
+  .ai-config-actions #btn-test-ai-config,
+  .ai-config-actions #btn-clear-ai-config {
+    grid-column: span 1;
+    height: 36px;
+    width: 100%;
+    padding: 0 6px;
+    font-size: 11.5px;
+  }
+
+  .ai-action-btn {
+    height: 40px;
+    font-size: 11.5px;
+  }
+
+  .ai-prompt-textarea {
+    font-size: 13px;
+    touch-action: manipulation;
+  }
+
+  .ai-price-grid {
+    gap: 6px;
+  }
+
+  .ai-grid-val {
+    font-size: 13px;
+  }
 }

@@ -749,3 +749,46 @@ input:checked + .slider:before {
     height: 16px;
   }
 }
+
+/* Portrait Mobile Small-Screen Adjustments (<= 420px) */
+@media (max-width: 420px) {
+  .app-header {
+    padding: 0 6px;
+    gap: 4px;
+  }
+  .header-left {
+    gap: 4px;
+  }
+  .symbol-pill-trigger {
+    padding: 4px 7px;
+    gap: 3px;
+  }
+  .symbol-pill-trigger .sym-name {
+    font-size: 13px;
+  }
+  .symbol-pill-trigger .sym-tag {
+    display: none;
+  }
+  .header-timer {
+    padding: 3px 6px;
+    gap: 3px;
+  }
+  .timer-text {
+    font-size: 11px;
+    min-width: 34px;
+  }
+  .header-right {
+    gap: 4px;
+  }
+  .status-badge {
+    padding: 3px 6px;
+  }
+  .status-badge span {
+    display: none;
+  }
+  .icon-touch-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+}
