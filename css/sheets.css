@@ -1226,8 +1226,10 @@
 
 @media (max-width: 768px) {
   .api-text-input {
-    font-size: 13px;
-    height: 40px;
+    /* 16px prevents iOS Safari's focus auto-zoom, which otherwise pushes the
+       key field and the Save button out of view behind the on-screen keyboard. */
+    font-size: 16px;
+    height: 42px;
     touch-action: manipulation;
   }
   .api-toggle-vis {
