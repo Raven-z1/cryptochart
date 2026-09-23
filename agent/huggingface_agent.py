@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Autonomous AI Trading Agent using OpenRouter AI Gateway
+Autonomous AI Trading Agent using Hugging Face AI Gateway
 -------------------------------------------------------
 Analyzes Binance USDⓈ-M futures market data and calculates optimal
 Long / Short trade positions with Take Profit (TP) and Stop Loss (SL).
@@ -8,8 +8,8 @@ Outputs the position parameters and generates a deep-link URL to draw
 the position directly on the interactive CryptoChart.
 
 Usage:
-    export OPENROUTER_API_KEY="your-openrouter-api-key"
-    python3 agent/openrouter_agent.py --symbol BTCUSDT --timeframe 5m --direction auto
+    export HUGGINGFACE_API_KEY="your-huggingface-api-key"
+    python3 agent/huggingface_agent.py --symbol BTCUSDT --timeframe 5m --direction auto
 """
 
 import os
@@ -21,8 +21,8 @@ import urllib.error
 import urllib.parse
 import webbrowser
 
-DEFAULT_OPENROUTER_BASE = "https://openrouter.ai/api/v1"
-DEFAULT_MODEL = "openai/gpt-4o-mini"
+DEFAULT_HUGGINGFACE_BASE = "https://router.huggingface.co/v1"
+DEFAULT_MODEL = "openai/gpt-oss-120b"
 BINANCE_FAPI_BASE = "https://fapi.binance.com"
 
 
@@ -94,7 +94,7 @@ def calculate_rsi(closes, period=14):
     return 100.0 - (100.0 / (1.0 + rs))
 
 
-def call_openrouter(api_key, model, system_prompt, user_prompt, base_url=DEFAULT_OPENROUTER_BASE):
+def call_huggingface(api_key, model, system_prompt, user_prompt, base_url=DEFAULT_HUGGINGFACE_BASE):
     endpoint = base_url.rstrip("/")
     if not endpoint.endswith("/chat/completions"):
         endpoint += "/chat/completions"
@@ -142,25 +142,25 @@ def call_openrouter(api_key, model, system_prompt, user_prompt, base_url=DEFAULT
             with urllib.request.urlopen(req, timeout=30) as resp2:
                 data2 = json.loads(resp2.read().decode("utf-8"))
                 return data2["choices"][0]["message"]["content"]
-        raise RuntimeError(f"OpenRouter HTTP {e.code}: {err_msg}")
+        raise RuntimeError(f"Hugging Face HTTP {e.code}: {err_msg}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="OpenRouter Autonomous Crypto AI Agent")
+    parser = argparse.ArgumentParser(description="Hugging Face Autonomous Crypto AI Agent")
     parser.add_argument("--symbol", default="BTCUSDT", help="Trading symbol (e.g. BTCUSDT, ETHUSDT)")
     parser.add_argument("--timeframe", default="5m", help="Candle interval (e.g. 5m, 15m, 1h)")
     parser.add_argument("--direction", default="auto", choices=["long", "short", "auto"], help="Setup bias")
     parser.add_argument("--strategy", default="scalp", help="Strategy (scalp, breakout, orderblock, pullback)")
-    parser.add_argument("--model", default=DEFAULT_MODEL, help="AI model via OpenRouter (e.g. openai/gpt-4o-mini, openai/gpt-4o, anthropic/claude-3.5-sonnet, deepseek/deepseek-chat)")
-    parser.add_argument("--base-url", default=os.getenv("OPENROUTER_BASE_URL", DEFAULT_OPENROUTER_BASE), help="OpenRouter gateway base URL")
+    parser.add_argument("--model", default=DEFAULT_MODEL, help="AI model via Hugging Face (e.g. openai/gpt-oss-120b, openai/gpt-oss-20b, Qwen/Qwen3.5-9B, meta-llama/Llama-3.3-70B-Instruct)")
+    parser.add_argument("--base-url", default=os.getenv("HUGGINGFACE_BASE_URL", DEFAULT_HUGGINGFACE_BASE), help="Hugging Face gateway base URL")
     parser.add_argument("--chart-url", default="http://localhost:8080/index.html", help="Base URL of CryptoChart web app")
     parser.add_argument("--open", action="store_true", help="Automatically open chart in default web browser")
     args = parser.parse_args()
 
-    api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
+    api_key = os.getenv("HUGGINGFACE_API_KEY", "").strip()
     if not api_key:
-        print("ERROR: OPENROUTER_API_KEY environment variable is not set.", file=sys.stderr)
-        print("Set it using: export OPENROUTER_API_KEY='your-key-here'", file=sys.stderr)
+        print("ERROR: HUGGINGFACE_API_KEY environment variable is not set.", file=sys.stderr)
+        print("Set it using: export HUGGINGFACE_API_KEY='your-key-here'", file=sys.stderr)
         sys.exit(1)
 
     print(f"[*] Fetching live Binance market data for {args.symbol} ({args.timeframe})...")
@@ -176,7 +176,7 @@ def main():
     low24h = float(ticker24h.get("lowPrice", 0))
 
     print(f"[*] Live Price: ${cur_price:.2f} | ATR: ${atr:.2f} | RSI: {rsi:.1f} | 24h High: ${high24h:.2f} | 24h Low: ${low24h:.2f}")
-    print(f"[*] Calling OpenRouter AI Gateway ({args.model})...")
+    print(f"[*] Calling Hugging Face AI Gateway ({args.model})...")
 
     system_prompt = f"""You are an elite cryptocurrency futures technical analyst and algorithmic risk manager.
 Your job is to analyze real-time market data for {args.symbol} and output an optimal Long or Short position setup with Take Profit (TP) and Stop Loss (SL).
@@ -211,7 +211,7 @@ Last 10 Closes: {[round(c, 2) for c in closes[-10:]]}
 
 Generate the JSON trade plan now."""
 
-    raw_resp = call_openrouter(api_key, args.model, system_prompt, user_prompt, args.base_url)
+    raw_resp = call_huggingface(api_key, args.model, system_prompt, user_prompt, args.base_url)
 
     # Clean response
     cleaned = raw_resp.strip()
@@ -226,14 +226,14 @@ Generate the JSON trade plan now."""
     sl = float(plan["slPrice"])
     rr = float(plan.get("riskReward", 2.0))
     conf = plan.get("confidence", 80)
-    strat = plan.get("strategy", "OpenRouter AI Setup")
+    strat = plan.get("strategy", "Hugging Face AI Setup")
     rationale = plan.get("rationale", "")
 
     tp_pct = abs((tp - entry) / entry * 100)
     sl_pct = abs((entry - sl) / entry * 100)
 
     print("\n" + "=" * 55)
-    print(f"🤖 OPENROUTER AI TRADE RECOMMENDATION")
+    print(f"🤖 HUGGING FACE AI TRADE RECOMMENDATION")
     print("=" * 55)
     print(f"Direction  : {'🟢 LONG' if is_long else '🔴 SHORT'}")
     print(f"Asset      : {args.symbol} ({args.timeframe})")

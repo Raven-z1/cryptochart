@@ -99,14 +99,14 @@ Open `http://localhost:8000` in your browser.
 
 ---
 
-## 🤖 OpenRouter AI Agent (Automated Long / Short with TP & SL)
+## 🤖 Hugging Face AI Agent (Automated Long / Short with TP & SL)
 
-The chart includes a native AI Trading Agent integrated with **[OpenRouter](https://openrouter.ai)** (OpenAI-compatible AI Gateway). The agent scans live candlestick price action, ATR, RSI, EMAs, and Bollinger Bands to formulate high-probability trade setups and automatically plots them on the chart with exact Entry, Take Profit, and Stop Loss brackets.
+The chart includes a native AI Trading Agent integrated with **[Hugging Face](https://huggingface.co)** (OpenAI-compatible AI Gateway). The agent scans live candlestick price action, ATR, RSI, EMAs, and Bollinger Bands to formulate high-probability trade setups and automatically plots them on the chart with exact Entry, Take Profit, and Stop Loss brackets.
 
 ### 1. In-App AI Agent
 1. Tap the **`✨ AI Agent`** button in the chart toolbar or the **`🤖`** button in the top app bar.
-2. Enter your **OpenRouter API Key** (from [openrouter.ai](https://openrouter.ai)).
-3. Select your model (e.g. `gpt-4o-mini`, `gpt-4o`, `claude-3-5-sonnet`, `deepseek-chat`).
+2. Enter your **Hugging Face API Key** (from [huggingface.co](https://huggingface.co)).
+3. Select your model (e.g. `openai/gpt-oss-120b`, `openai/gpt-oss-20b`, `Qwen/Qwen3.5-9B`, `meta-llama/Llama-3.3-70B-Instruct`).
 4. Choose an action:
    - **`▲ AI Long Setup`**: Calculates an optimal Long entry, TP, and SL.
    - **`▼ AI Short Setup`**: Calculates an optimal Short entry, TP, and SL.
@@ -124,18 +124,18 @@ window.drawAiPosition({
   entryPrice: 64250,  // optional, defaults to live price
   tpPrice: 65800,     // Take Profit price
   slPrice: 63500,     // Stop Loss price
-  note: 'OpenRouter Breakout'
+  note: 'Hugging Face Breakout'
 });
 ```
 
 #### URL Deep-Link:
 ```
-http://localhost:8000/index.html?symbol=BTCUSDT&pos=long&entry=64250&tp=65800&sl=63500&note=OpenRouter
+http://localhost:8000/index.html?symbol=BTCUSDT&pos=long&entry=64250&tp=65800&sl=63500&note=HF
 ```
 
 #### Autonomous Python Agent:
-Run the standalone AI agent script powered by OpenRouter:
+Run the standalone AI agent script powered by Hugging Face:
 ```bash
-export OPENROUTER_API_KEY="your-openrouter-api-key"
-python3 agent/openrouter_agent.py --symbol BTCUSDT --timeframe 5m --direction auto --open
+export HUGGINGFACE_API_KEY="your-huggingface-api-key"
+python3 agent/huggingface_agent.py --symbol BTCUSDT --timeframe 5m --direction auto --open
 ```

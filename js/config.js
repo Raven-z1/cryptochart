@@ -92,35 +92,35 @@ var state = {
   aiAgent: {
     gatewayUrl: (function () {
       try {
-        return localStorage.getItem('cc_openrouter_base') || 'https://openrouter.ai/api/v1';
+        return localStorage.getItem('cc_huggingface_base') || 'https://router.huggingface.co/v1';
       } catch (_) {
-        return 'https://openrouter.ai/api/v1';
+        return 'https://router.huggingface.co/v1';
       }
     })(),
     apiKey: (function () {
       try {
-        return localStorage.getItem('cc_openrouter_key') || '';
+        return localStorage.getItem('cc_huggingface_key') || '';
       } catch (_) {
         return '';
       }
     })(),
     model: (function () {
       try {
-        return localStorage.getItem('cc_openrouter_model') || 'openai/gpt-4o-mini';
+        return localStorage.getItem('cc_huggingface_model') || 'openai/gpt-oss-120b';
       } catch (_) {
-        return 'openai/gpt-4o-mini';
+        return 'openai/gpt-oss-120b';
       }
     })(),
     strategy: (function () {
       try {
-        return localStorage.getItem('cc_openrouter_strat') || 'scalp';
+        return localStorage.getItem('cc_huggingface_strat') || 'scalp';
       } catch (_) {
         return 'scalp';
       }
     })(),
     customPrompt: (function () {
       try {
-        return localStorage.getItem('cc_openrouter_prompt') || '';
+        return localStorage.getItem('cc_huggingface_prompt') || '';
       } catch (_) {
         return '';
       }
@@ -344,7 +344,7 @@ var dom = {
   posSecCount: document.getElementById('pos-sec-count'),
   openPositionsContainer: document.getElementById('open-positions-container'),
 
-  // OpenRouter AI Agent Sheet & Components
+  // Hugging Face AI Agent Sheet & Components
   aiBackdrop: document.getElementById('ai-sheet-backdrop'),
   aiSheet: document.getElementById('ai-sheet'),
   aiSheetClose: document.getElementById('ai-sheet-close'),
@@ -384,19 +384,19 @@ var dom = {
   btnClearAiConfig: document.getElementById('btn-clear-ai-config'),
   aiSheetTestResult: document.getElementById('ai-sheet-test-result'),
 
-  // Unified API Sheet Tabs & OpenRouter Modal Elements
+  // Unified API Sheet Tabs & Hugging Face Modal Elements
   tabBtnBinance: document.getElementById('tab-btn-binance'),
-  tabBtnOpenRouter: document.getElementById('tab-btn-openrouter'),
+  tabBtnHuggingFace: document.getElementById('tab-btn-huggingface'),
   panelApiBinance: document.getElementById('panel-api-binance'),
-  panelApiOpenRouter: document.getElementById('panel-api-openrouter'),
-  openrouterModalBaseInput: document.getElementById('openrouter-modal-base-input'),
-  openrouterModalKeyInput: document.getElementById('openrouter-modal-key-input'),
-  btnToggleOpenRouterModalVis: document.getElementById('btn-toggle-openrouter-modal-vis'),
-  openrouterModalModelInput: document.getElementById('openrouter-modal-model-input'),
-  openrouterModalTestResult: document.getElementById('openrouter-modal-test-result'),
-  btnOpenRouterModalClear: document.getElementById('btn-openrouter-modal-clear'),
-  btnOpenRouterModalTest: document.getElementById('btn-openrouter-modal-test'),
-  btnOpenRouterModalSave: document.getElementById('btn-openrouter-modal-save'),
+  panelApiHuggingFace: document.getElementById('panel-api-huggingface'),
+  huggingfaceModalBaseInput: document.getElementById('huggingface-modal-base-input'),
+  huggingfaceModalKeyInput: document.getElementById('huggingface-modal-key-input'),
+  btnToggleHuggingFaceModalVis: document.getElementById('btn-toggle-huggingface-modal-vis'),
+  huggingfaceModalModelInput: document.getElementById('huggingface-modal-model-input'),
+  huggingfaceModalTestResult: document.getElementById('huggingface-modal-test-result'),
+  btnHuggingFaceModalClear: document.getElementById('btn-huggingface-modal-clear'),
+  btnHuggingFaceModalTest: document.getElementById('btn-huggingface-modal-test'),
+  btnHuggingFaceModalSave: document.getElementById('btn-huggingface-modal-save'),
 };
 
 

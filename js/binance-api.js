@@ -289,20 +289,20 @@ function openApiSheet(initialTab = 'binance') {
   updateApiEnvDisplay();
 
   // Switch to selected tab
-  if (initialTab === 'openrouter') {
-    if (dom.tabBtnOpenRouter) dom.tabBtnOpenRouter.classList.add('active');
+  if (initialTab === 'huggingface') {
+    if (dom.tabBtnHuggingFace) dom.tabBtnHuggingFace.classList.add('active');
     if (dom.tabBtnBinance) dom.tabBtnBinance.classList.remove('active');
-    if (dom.panelApiOpenRouter) dom.panelApiOpenRouter.classList.remove('hidden');
+    if (dom.panelApiHuggingFace) dom.panelApiHuggingFace.classList.remove('hidden');
     if (dom.panelApiBinance) dom.panelApiBinance.classList.add('hidden');
   } else {
     if (dom.tabBtnBinance) dom.tabBtnBinance.classList.add('active');
-    if (dom.tabBtnOpenRouter) dom.tabBtnOpenRouter.classList.remove('active');
+    if (dom.tabBtnHuggingFace) dom.tabBtnHuggingFace.classList.remove('active');
     if (dom.panelApiBinance) dom.panelApiBinance.classList.remove('hidden');
-    if (dom.panelApiOpenRouter) dom.panelApiOpenRouter.classList.add('hidden');
+    if (dom.panelApiHuggingFace) dom.panelApiHuggingFace.classList.add('hidden');
   }
 
-  if (typeof window.syncOpenRouterInputs === 'function') {
-    window.syncOpenRouterInputs();
+  if (typeof window.syncHuggingFaceInputs === 'function') {
+    window.syncHuggingFaceInputs();
   }
 
   openSheet(dom.apiSheetBackdrop);
