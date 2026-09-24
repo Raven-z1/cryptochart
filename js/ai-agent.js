@@ -1105,7 +1105,10 @@ function initAiAgent() {
     if (dragHandle) dragHandle.addEventListener('click', closeAllSheets);
   }
 
-  updateGatewayStatusBadge();
+  // Hydrate inputs, chips, state & badge from persisted config
+  // (localStorage → state → DOM). Without this, hardcoded HTML input
+  // values could stomp the saved model on the next sync.
+  syncHuggingFaceInputs();
   checkUrlParamsForAiPositions();
 }
 
