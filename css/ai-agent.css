@@ -306,58 +306,13 @@
   box-shadow: 0 6px 20px rgba(124, 58, 237, 0.55);
 }
 
-/* Strategy Presets Row */
-.ai-strategy-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
+/* Section Labels */
 .ai-section-lbl {
   font-size: 11px;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.ai-strategy-pills {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 2px;
-  -webkit-overflow-scrolling: touch;
-}
-
-.ai-strategy-pills::-webkit-scrollbar {
-  display: none;
-}
-
-.ai-strat-pill {
-  flex-shrink: 0;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
-  border-radius: 20px;
-  padding: 5px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.ai-strat-pill:hover {
-  border-color: rgba(168, 85, 247, 0.4);
-  color: var(--text-main);
-}
-
-.ai-strat-pill.active {
-  background: rgba(168, 85, 247, 0.2);
-  border-color: #a855f7;
-  color: #f3e8ff;
-  font-weight: 700;
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
 }
 
 /* Custom Prompt Input Container */

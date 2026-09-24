@@ -147,10 +147,10 @@ function getMarketTechnicalSnapshot() {
 function buildAiPrompt(actionType, userNote = '') {
   const snapshot = getMarketTechnicalSnapshot();
   const prec = snapshot.precision;
-  const strat = state.aiAgent.strategy || 'scalp';
 
   const systemPrompt = `You are an elite cryptocurrency futures algorithmic trading agent and quantitative risk manager.
-Your job is to analyze live Binance USDⓈ-M candle data, market structure, volatility, and technical indicators to construct an optimal trade setup.
+Your job is to analyze live Binance USDⓈ-M candle data, market structure, volatility, and technical indicators to construct an optimal SCALP trade setup.
+You must independently select the single best scalping strategy for the current chart timeframe and live market conditions — no preset strategy template is provided.
 You must output a precise trade recommendation with ENTRY, TAKE PROFIT (TP), and STOP LOSS (SL) price levels.
 
 CRITICAL MATHEMATICAL & RISK RULES:
@@ -201,7 +201,7 @@ REQUIRED JSON SCHEMA:
 - Recent 12 Candlesticks (Oldest to Newest):
 ${snapshot.recentCandles.join('\n')}
 
-SELECTED STRATEGY STYLE: ${strat.toUpperCase()}
+STRATEGY: No preset template — choose your own best scalping strategy for the ${snapshot.interval} timeframe based on the data above, and state its name in "strategy".
 USER REQUEST / NOTES: ${userNote || 'None'}
 DIRECTIVE: ${actionDirective}
 
@@ -904,19 +904,6 @@ function initAiAgent() {
       document.querySelectorAll('.ai-model-chip').forEach(c => c.classList.toggle('active', c.dataset.model === m));
       try { localStorage.setItem('cc_huggingface_model', m); } catch (_) {}
       updateGatewayStatusBadge();
-    });
-  });
-
-  // Highlight active strategy pill
-  document.querySelectorAll('.ai-strat-pill').forEach(pill => {
-    const s = pill.dataset.strat;
-    pill.classList.toggle('active', s === state.aiAgent.strategy);
-    pill.addEventListener('click', () => {
-      haptic(10);
-      document.querySelectorAll('.ai-strat-pill').forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      state.aiAgent.strategy = s;
-      try { localStorage.setItem('cc_huggingface_strat', s); } catch (_) {}
     });
   });
 

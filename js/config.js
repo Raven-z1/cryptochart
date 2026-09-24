@@ -111,13 +111,6 @@ var state = {
         return 'openai/gpt-oss-120b';
       }
     })(),
-    strategy: (function () {
-      try {
-        return localStorage.getItem('cc_huggingface_strat') || 'scalp';
-      } catch (_) {
-        return 'scalp';
-      }
-    })(),
     customPrompt: (function () {
       try {
         return localStorage.getItem('cc_huggingface_prompt') || '';
