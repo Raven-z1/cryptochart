@@ -532,6 +532,22 @@ function updatePositionUI() {
   syncPriceLines();
 }
 
+// Re-derive TP from the fixed entry so a given R:R ratio is preserved.
+// Used while dragging the SL, so the reward scales automatically with the risk.
+function syncTpToRr(rr) {
+  const ratio = parseFloat(rr);
+  if (!isFinite(ratio) || ratio <= 0) return false;
+  const entry = positionState.entryPrice;
+  if (!(entry > 0)) return false;
+  const isLong = positionState.type === 'long';
+  const risk = isLong ? (entry - positionState.slPrice) : (positionState.slPrice - entry);
+  if (!(risk > 0)) return false;
+  const tp = isLong ? (entry + ratio * risk) : (entry - ratio * risk);
+  if (!(tp > 0)) return false;
+  positionState.tpPrice = tp;
+  return true;
+}
+
 // Drag Handlers with global window tracking & requestAnimationFrame
 let activeDrag = null;
 let dragRaf = null;
@@ -595,6 +611,9 @@ function startDrag(e, mode) {
   const startPrice = targetSeries.coordinateToPrice(clampedY) || positionState.entryPrice;
   const startLogical = chart.timeScale().coordinateToLogical(curX);
 
+  // Snapshot the R:R so an SL drag can keep the reward ratio locked
+  const startMetrics = getPositionMetrics();
+
   activeDrag = {
     mode,
     pointerId: e.pointerId,
@@ -608,6 +627,7 @@ function startDrag(e, mode) {
     initSl: positionState.slPrice,
     initStartLog: positionState.startLogical,
     initEndLog: positionState.endLogical,
+    lockedRr: (isFinite(startMetrics.rr) && startMetrics.rr > 0) ? startMetrics.rr : 0,
     hasMoved: false,
   };
 
@@ -703,6 +723,8 @@ function handleDragFrame() {
     } else {
       positionState.slPrice = Math.max(positionState.entryPrice + minDiff, curPrice);
     }
+    // Move TP along with the stop so the R:R ratio stays locked
+    syncTpToRr(activeDrag.lockedRr);
   } else if (activeDrag.mode === 'entry') {
     const priceDelta = curPrice - activeDrag.startPrice;
     const newEntry = activeDrag.initEntry + priceDelta;
@@ -1099,6 +1121,7 @@ window.syncPriceLines = syncPriceLines;
 window.clearPriceLines = clearPriceLines;
 window.clearPosition = clearPosition;
 window.setRRRatio = setRRRatio;
+window.syncTpToRr = syncTpToRr;
 window.updatePositionUI = updatePositionUI;
 window.openPositionSheet = openPositionSheet;
 window.requestChartOverlaySync = requestChartOverlaySync;
