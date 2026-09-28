@@ -705,6 +705,7 @@ function closeAllSheets() {
   if (dom.marketBackdrop) dom.marketBackdrop.classList.remove('open');
   if (dom.indBackdrop) dom.indBackdrop.classList.remove('open');
   if (dom.alertBackdrop) dom.alertBackdrop.classList.remove('open');
+  if (dom.viewSheetBackdrop) dom.viewSheetBackdrop.classList.remove('open');
   if (dom.posBackdrop) dom.posBackdrop.classList.remove('open');
   if (dom.posConfirmBackdrop) dom.posConfirmBackdrop.classList.remove('open');
   if (dom.apiSheetBackdrop) dom.apiSheetBackdrop.classList.remove('open');

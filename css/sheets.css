@@ -524,6 +524,11 @@
   color: #0b0e11;
   border-color: var(--binance-gold);
 }
+.pos-sheet-preset.active {
+  background: var(--binance-gold);
+  color: #0b0e11;
+  border-color: var(--binance-gold);
+}
 
 .pos-sheet-actions {
   display: flex;

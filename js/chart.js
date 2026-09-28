@@ -169,17 +169,30 @@ function cycleChartStyle() {
   showToast(`Chart: ${names[state.chartStyle]}`);
 }
 
-// Mobile Default Zoom: 100 Candles
-function zoomToDefaultCandles(count = CONFIG.defaultVisibleCandles || 100, rightOffset = 6) {
+// Apply the saved default candle view; count 0 (or nothing saved) fits all loaded candles
+function zoomToDefaultCandles(count = state.visibleCandles, rightOffset = 6) {
   const len = state.rawCandles ? state.rawCandles.length : 0;
   if (len === 0) return;
-  if (len <= count) {
+  if (!count || count <= 0 || len <= count) {
     chart.timeScale().fitContent();
     return;
   }
   const from = Math.max(0, len - count);
   const to = (len - 1) + rightOffset;
   chart.timeScale().setVisibleLogicalRange({ from, to });
+}
+
+// Persist & apply a custom default candle count (0 = fit all)
+function setVisibleCandles(count) {
+  let n = parseInt(count, 10);
+  if (!Number.isFinite(n) || n < 0) n = 0;
+  n = Math.min(n, CONFIG.candleLimit);
+  state.visibleCandles = n;
+  try {
+    localStorage.setItem('cc_visible_candles', String(n));
+  } catch (_) {}
+  zoomToDefaultCandles();
+  return n;
 }
 
 // Render chart data
@@ -303,4 +316,5 @@ window.updateLegend = updateLegend;
 window.updateChartStyleBtnUI = updateChartStyleBtnUI;
 window.cycleChartStyle = cycleChartStyle;
 window.zoomToDefaultCandles = zoomToDefaultCandles;
+window.setVisibleCandles = setVisibleCandles;
 window.updateChartHighLowLines = updateChartHighLowLines;

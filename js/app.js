@@ -219,18 +219,62 @@ if (dom.chartWatermark) {
   dom.chartWatermark.addEventListener('click', openTimeframeSheet);
 }
 
-// Fit / Reset View (100 Candles Mobile Default)
-dom.fitBtn.addEventListener('click', () => {
-  haptic(15);
-  const range = chart.timeScale().getVisibleLogicalRange();
-  if (range && Math.abs((range.to - range.from) - 106) < 20) {
-    chart.timeScale().fitContent();
-    showToast('Zoom: Fit All');
-  } else {
-    zoomToDefaultCandles(100);
-    showToast('Zoom: 100 Candles (Default)');
+// Chart View (custom default candle count, saved in browser)
+function syncViewSheetUI() {
+  const n = state.visibleCandles || 0;
+  if (dom.viewCandlesInput) dom.viewCandlesInput.value = n > 0 ? String(n) : '';
+  if (dom.viewPresetRow) {
+    dom.viewPresetRow.querySelectorAll('.pos-sheet-preset').forEach((b) => {
+      b.classList.toggle('active', parseInt(b.dataset.candles, 10) === n);
+    });
   }
-});
+}
+
+function applyViewCandles(count) {
+  const raw = (count !== undefined) ? count : (dom.viewCandlesInput ? dom.viewCandlesInput.value : '');
+  const saved = setVisibleCandles(raw === '' ? 0 : raw);
+  syncViewSheetUI();
+  closeAllSheets();
+  showToast(saved > 0 ? `Zoom: ${saved} Candles (Saved)` : 'Zoom: Fit All (Saved)');
+}
+
+// Fit button now opens the saved candle-view settings
+if (dom.fitBtn) {
+  dom.fitBtn.addEventListener('click', () => {
+    haptic(15);
+    if (!dom.viewSheetBackdrop) {
+      zoomToDefaultCandles();
+      showToast(state.visibleCandles > 0 ? `Zoom: ${state.visibleCandles} Candles` : 'Zoom: Fit All');
+      return;
+    }
+    syncViewSheetUI();
+    openSheet(dom.viewSheetBackdrop);
+  });
+}
+if (dom.viewSheetClose) dom.viewSheetClose.addEventListener('click', closeAllSheets);
+if (dom.viewSheetCancel) dom.viewSheetCancel.addEventListener('click', closeAllSheets);
+if (dom.viewSheetBackdrop) {
+  dom.viewSheetBackdrop.addEventListener('click', (e) => {
+    if (e.target === dom.viewSheetBackdrop) closeAllSheets();
+  });
+}
+if (dom.viewSheetApply) dom.viewSheetApply.addEventListener('click', () => applyViewCandles());
+if (dom.viewCandlesInput) {
+  dom.viewCandlesInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      applyViewCandles();
+    }
+  });
+}
+if (dom.viewPresetRow) {
+  dom.viewPresetRow.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pos-sheet-preset');
+    if (!btn) return;
+    haptic(15);
+    applyViewCandles(btn.dataset.candles);
+  });
+}
 
 // Rotate / Fullscreen
 dom.rotateBtn.addEventListener('click', toggleLandscapeFullscreen);

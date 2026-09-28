@@ -31,11 +31,11 @@
 
   <!-- Modular Stylesheets -->
   <!-- Cache-busted asset URLs (?v=) so clients always fetch the latest CSS/JS after a deploy -->
-  <link rel="stylesheet" href="css/base.css?v=20260924-2">
-  <link rel="stylesheet" href="css/chart.css?v=20260924-2">
-  <link rel="stylesheet" href="css/position-tool.css?v=20260924-2">
-  <link rel="stylesheet" href="css/sheets.css?v=20260924-2">
-  <link rel="stylesheet" href="css/ai-agent.css?v=20260924-2">
+  <link rel="stylesheet" href="css/base.css?v=20260928-1">
+  <link rel="stylesheet" href="css/chart.css?v=20260928-1">
+  <link rel="stylesheet" href="css/position-tool.css?v=20260928-1">
+  <link rel="stylesheet" href="css/sheets.css?v=20260928-1">
+  <link rel="stylesheet" href="css/ai-agent.css?v=20260928-1">
 </head>
 <body>
 
@@ -76,8 +76,8 @@
           <span>🔑</span>
         </button>
 
-        <!-- Reset Zoom / Fit Content -->
-        <button class="icon-touch-btn" id="fit-btn" title="Fit Content">
+        <!-- Chart View / Default Candle Count -->
+        <button class="icon-touch-btn" id="fit-btn" title="Chart View (Default Candles)">
           <span>⤢</span>
         </button>
 
@@ -936,6 +936,39 @@
     </div>
   </div>
 
+  <!-- Chart View / Default Candles Bottom Sheet -->
+  <div class="sheet-backdrop" id="view-sheet-backdrop">
+    <div class="bottom-sheet" id="view-sheet">
+      <div class="sheet-drag-handle"></div>
+      <div class="sheet-header">
+        <span class="sheet-title">Chart View</span>
+        <button class="sheet-close-btn" id="view-sheet-close">&times;</button>
+      </div>
+      <div class="pos-sheet-body">
+        <div class="pos-input-grid">
+          <div class="pos-input-group" style="grid-column: span 2;">
+            <label for="view-candles-input">Default Visible Candles</label>
+            <input type="number" min="10" max="500" step="10" id="view-candles-input" class="pos-num-input" placeholder="Number of candles (blank = fit all)">
+          </div>
+        </div>
+        <div class="pos-presets-row" id="view-preset-row">
+          <span class="pos-presets-label">Quick:</span>
+          <button type="button" class="pos-sheet-preset" data-candles="50">50</button>
+          <button type="button" class="pos-sheet-preset" data-candles="100">100</button>
+          <button type="button" class="pos-sheet-preset" data-candles="150">150</button>
+          <button type="button" class="pos-sheet-preset" data-candles="200">200</button>
+          <button type="button" class="pos-sheet-preset" data-candles="300">300</button>
+          <button type="button" class="pos-sheet-preset" data-candles="500">500</button>
+          <button type="button" class="pos-sheet-preset" data-candles="0">Fit All</button>
+        </div>
+        <div class="pos-sheet-actions">
+          <button type="button" class="pos-btn-cancel" id="view-sheet-cancel">Cancel</button>
+          <button type="button" class="pos-btn-apply" id="view-sheet-apply">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Candle Alert & Android Haptics Bottom Sheet -->
   <div class="sheet-backdrop" id="alert-sheet-backdrop">
     <div class="bottom-sheet" id="alert-sheet">
@@ -1180,14 +1213,14 @@
 
 
   <!-- Application Logic Modules -->
-  <script src="js/config.js?v=20260924-2"></script>
-  <script src="js/utils.js?v=20260924-2"></script>
-  <script src="js/chart.js?v=20260924-2"></script>
-  <script src="js/ui.js?v=20260924-2"></script>
-  <script src="js/position-tool.js?v=20260924-2"></script>
-  <script src="js/binance-api.js?v=20260924-2"></script>
-  <script src="js/positions-manager.js?v=20260924-2"></script>
-  <script src="js/ai-agent.js?v=20260924-2"></script>
-  <script src="js/app.js?v=20260924-2"></script>
+  <script src="js/config.js?v=20260928-1"></script>
+  <script src="js/utils.js?v=20260928-1"></script>
+  <script src="js/chart.js?v=20260928-1"></script>
+  <script src="js/ui.js?v=20260928-1"></script>
+  <script src="js/position-tool.js?v=20260928-1"></script>
+  <script src="js/binance-api.js?v=20260928-1"></script>
+  <script src="js/positions-manager.js?v=20260928-1"></script>
+  <script src="js/ai-agent.js?v=20260928-1"></script>
+  <script src="js/app.js?v=20260928-1"></script>
 </body>
 </html>

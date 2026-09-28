@@ -8,7 +8,6 @@ var CONFIG = {
   defaultSymbol: 'BTCUSDT',
   defaultInterval: '5m',
   candleLimit: 500,
-  defaultVisibleCandles: 100,
   defaultWatchlist: [
     'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT',
     'DOGEUSDT', '1000PEPEUSDT', 'SUIUSDT', 'AVAXUSDT', 'LINKUSDT', 'NEARUSDT', 'ADAUSDT'
@@ -32,6 +31,14 @@ var state = {
       if (['candles', 'heikin', 'line'].includes(s)) return s;
     } catch (_) {}
     return 'candles';
+  })(),
+  // Default visible candles saved by the user (0 = fit all loaded candles)
+  visibleCandles: (function () {
+    try {
+      const v = parseInt(localStorage.getItem('cc_visible_candles'), 10);
+      if (Number.isFinite(v) && v >= 0) return v;
+    } catch (_) {}
+    return 0;
   })(),
   watchlist: (function () {
     try {
@@ -168,6 +175,12 @@ var dom = {
   androidToast: document.getElementById('android-toast'),
   rotateBtn: document.getElementById('rotate-btn'),
   fitBtn: document.getElementById('fit-btn'),
+  viewSheetBackdrop: document.getElementById('view-sheet-backdrop'),
+  viewSheetClose: document.getElementById('view-sheet-close'),
+  viewSheetCancel: document.getElementById('view-sheet-cancel'),
+  viewSheetApply: document.getElementById('view-sheet-apply'),
+  viewCandlesInput: document.getElementById('view-candles-input'),
+  viewPresetRow: document.getElementById('view-preset-row'),
   // Dock buttons
   dockMarketBtn: document.getElementById('dock-market-btn'),
   dockTfBtn: document.getElementById('dock-tf-btn'),
