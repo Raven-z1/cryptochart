@@ -5,6 +5,9 @@
 // =========================================================
 // TradingView-Style Long / Short Position Drawing Tool
 // =========================================================
+// Default risk/reward for manually drawn positions (1:1.3)
+var DEFAULT_RR = 1.3;
+
 var positionState = {
   active: false,
   type: 'long', // 'long' | 'short'
@@ -70,13 +73,14 @@ function drawPosition(type) {
   positionState.type = type;
   positionState.entryPrice = curPrice;
 
-  // Default standard 1:2 R:R setup
+  // Default 1:1.3 R:R setup (risk 1%)
+  const riskPct = 0.01;
   if (type === 'long') {
-    positionState.tpPrice = curPrice * 1.02; // +2.00%
-    positionState.slPrice = curPrice * 0.99; // -1.00%
+    positionState.slPrice = curPrice * (1 - riskPct);
+    positionState.tpPrice = curPrice * (1 + riskPct * DEFAULT_RR);
   } else {
-    positionState.tpPrice = curPrice * 0.98; // -2.00%
-    positionState.slPrice = curPrice * 1.01; // +1.00%
+    positionState.slPrice = curPrice * (1 + riskPct);
+    positionState.tpPrice = curPrice * (1 - riskPct * DEFAULT_RR);
   }
 
   const candleCount = state.rawCandles ? state.rawCandles.length : 0;
