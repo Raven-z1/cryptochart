@@ -240,6 +240,24 @@ html, body {
   100% { box-shadow: 0 0 0 0 rgba(14, 203, 129, 0); }
 }
 
+.status-badge.offline {
+  background: rgba(246, 70, 93, 0.12);
+  border-color: rgba(246, 70, 93, 0.3);
+  color: var(--color-bear);
+}
+.status-badge.offline .status-dot {
+  background: var(--color-bear);
+  animation: none;
+}
+.status-badge.connecting {
+  background: rgba(240, 185, 11, 0.12);
+  border-color: rgba(240, 185, 11, 0.3);
+  color: var(--binance-gold);
+}
+.status-badge.connecting .status-dot {
+  background: var(--binance-gold);
+}
+
 /* Real-Time Price & Stats Ribbon (Optimized for Android Screens) */
 .stats-ribbon {
   background: var(--bg-base);

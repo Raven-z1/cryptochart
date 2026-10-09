@@ -282,9 +282,23 @@ dom.rotateBtn.addEventListener('click', toggleLandscapeFullscreen);
 // Visibility Change (App resume)
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) {
-    if (state.symbol) fetchKlines(state.symbol, state.interval);
+    if (state.symbol) {
+      fetchKlines(state.symbol, state.interval);
+      if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
+        connectWebSocket(state.symbol, state.interval);
+      }
+    }
     if (typeof window.loadPositionsAndBalance === 'function') {
       window.loadPositionsAndBalance({ silent: true });
+    }
+  }
+});
+
+// Window Focus (Tab / Screen focus resume)
+window.addEventListener('focus', () => {
+  if (!document.hidden && state.symbol) {
+    if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
+      connectWebSocket(state.symbol, state.interval);
     }
   }
 });

@@ -305,28 +305,51 @@ async function fetchKlines(symbol, interval) {
 }
 
 function connectWebSocket(symbol, interval) {
+  if (!symbol) symbol = state.symbol || CONFIG.defaultSymbol;
+  if (!interval) interval = state.interval || CONFIG.defaultInterval;
+
   clearTimeout(state.wsReconnectTimer);
+  clearInterval(state.wsWatchdogTimer);
+
   if (state.ws) {
     state.ws.onclose = null;
     state.ws.onerror = null;
-    state.ws.close();
+    state.ws.onmessage = null;
+    try { state.ws.close(); } catch (_) {}
     state.ws = null;
   }
 
+  if (dom.wsStatus) {
+    dom.wsStatus.className = 'status-badge connecting';
+  }
   dom.wsStatusText.textContent = `Connecting...`;
-  const ws = new WebSocket(`${CONFIG.wsBase}/${symbol.toLowerCase()}@kline_${interval}`);
+
+  const streamName = `${symbol.toLowerCase()}@kline_${interval}`;
+  const wsUrl = `${CONFIG.wsBase}/${streamName}`;
+
+  let lastMessageTime = Date.now();
+  const ws = new WebSocket(wsUrl);
   state.ws = ws;
 
   ws.onopen = () => {
+    lastMessageTime = Date.now();
+    if (dom.wsStatus) {
+      dom.wsStatus.className = 'status-badge';
+    }
     dom.wsStatusText.textContent = `${interval} LIVE`;
   };
 
   ws.onmessage = (ev) => {
     try {
+      lastMessageTime = Date.now();
       const msg = JSON.parse(ev.data);
       if (msg.e !== 'kline' || !msg.k) return;
 
       const k = msg.k;
+      // Discard stale messages if chart was switched
+      if (k.s && k.s.toUpperCase() !== state.symbol.toUpperCase()) return;
+      if (k.i && k.i !== state.interval) return;
+
       const cTime = Math.floor(k.t / 1000);
       const o = parseFloat(k.o);
       const h = parseFloat(k.h);
@@ -341,7 +364,7 @@ function connectWebSocket(symbol, interval) {
       const len = state.rawCandles.length;
       if (len > 0 && state.rawCandles[len - 1].time === cTime) {
         state.rawCandles[len - 1] = cObj;
-      } else if (len > 0 && cTime > state.rawCandles[len - 1].time) {
+      } else if (len === 0 || cTime > state.rawCandles[len - 1].time) {
         state.rawCandles.push(cObj);
         if (state.rawCandles.length > CONFIG.candleLimit) state.rawCandles.shift();
       }
@@ -350,7 +373,7 @@ function connectWebSocket(symbol, interval) {
         lineSeries.update({ time: cTime, value: c });
       } else if (state.chartStyle === 'heikin') {
         const ha = computeHeikinAshi(state.rawCandles);
-        candleSeries.update(ha[ha.length - 1]);
+        if (ha.length > 0) candleSeries.update(ha[ha.length - 1]);
       } else {
         candleSeries.update({ time: cTime, open: o, high: h, low: l, close: c });
       }
@@ -361,17 +384,54 @@ function connectWebSocket(symbol, interval) {
         color: c >= o ? 'rgba(14, 203, 129, 0.45)' : 'rgba(246, 70, 93, 0.45)',
       });
 
+      // Update real-time Bollinger Bands if enabled
+      if (state.indicators && state.indicators.bb && state.rawCandles.length >= 20) {
+        const bb = calculateBollingerBands(state.rawCandles, 20, 2);
+        if (bb.upper.length > 0) {
+          bbUpperSeries.update(bb.upper[bb.upper.length - 1]);
+          bbMiddleSeries.update(bb.middle[bb.middle.length - 1]);
+          bbLowerSeries.update(bb.lower[bb.lower.length - 1]);
+        }
+      }
+
+      // Re-anchor active drawn position if candle time shifted
+      if (typeof positionState !== 'undefined' && positionState && positionState.active) {
+        if (typeof reanchorPositionToCandles === 'function') reanchorPositionToCandles();
+        if (typeof updatePositionUI === 'function') updatePositionUI();
+      }
+
       updateLegend(cObj);
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Kline WS parse error:', e);
+    }
+  };
+
+  ws.onerror = (err) => {
+    console.warn('Kline WS error:', err);
   };
 
   ws.onclose = () => {
+    if (dom.wsStatus) {
+      dom.wsStatus.className = 'status-badge offline';
+    }
     dom.wsStatusText.textContent = 'Offline';
+    clearInterval(state.wsWatchdogTimer);
     clearTimeout(state.wsReconnectTimer);
     state.wsReconnectTimer = setTimeout(() => {
-      connectWebSocket(state.symbol, state.interval);
-    }, 3000);
+      if (!document.hidden) {
+        connectWebSocket(state.symbol, state.interval);
+      }
+    }, 2000);
   };
+
+  // Watchdog timer: If connection is open but silent for > 20s, reconnect
+  state.wsWatchdogTimer = setInterval(() => {
+    if (document.hidden) return;
+    if (Date.now() - lastMessageTime > 20000) {
+      console.warn('Kline WS stalled (no data in 20s), reconnecting...');
+      connectWebSocket(state.symbol, state.interval);
+    }
+  }, 10000);
 }
 
 // Candle Countdown & Alerts

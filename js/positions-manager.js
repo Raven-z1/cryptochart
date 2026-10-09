@@ -259,7 +259,7 @@ function syncPositionsWebSocket(activePositions) {
       wsUrl = `${CONFIG.wsBase}/${symbols[0].toLowerCase()}@markPrice@1s`;
     } else {
       const streamParams = symbols.map(s => `${s.toLowerCase()}@markPrice@1s`).join('/');
-      wsUrl = `wss://fstream.binance.com/stream?streams=${streamParams}`;
+      wsUrl = `${CONFIG.wsStreamBase || 'wss://fstream.binance.com/market/stream'}?streams=${streamParams}`;
     }
 
     const ws = new WebSocket(wsUrl);

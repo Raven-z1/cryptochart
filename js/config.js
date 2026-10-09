@@ -4,7 +4,8 @@
 
 var CONFIG = {
   restBase: 'https://fapi.binance.com',
-  wsBase: 'wss://fstream.binance.com/ws',
+  wsBase: 'wss://fstream.binance.com/market/ws',
+  wsStreamBase: 'wss://fstream.binance.com/market/stream',
   defaultSymbol: 'BTCUSDT',
   defaultInterval: '5m',
   candleLimit: 500,
@@ -80,6 +81,7 @@ var state = {
   lastAlertTriggeredTime: 0,
   ws: null,
   wsReconnectTimer: null,
+  wsWatchdogTimer: null,
   candleTimerInterval: null,
   statRefreshInterval: null,
   binanceApi: {
@@ -169,6 +171,7 @@ var dom = {
   col24hHigh: document.getElementById('col-24h-high'),
   col24hLow: document.getElementById('col-24h-low'),
   col24hRange: document.getElementById('col-24h-range'),
+  wsStatus: document.getElementById('ws-status'),
   wsStatusText: document.getElementById('ws-status-text'),
   chartLoader: document.getElementById('chart-loader'),
   chartWatermark: document.getElementById('chart-watermark'),
