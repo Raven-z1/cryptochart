@@ -327,6 +327,12 @@ function saveApiConfig() {
   updateApiEnvDisplay();
   showToast(key && secret ? 'Binance API Config Saved' : 'API Keys Cleared');
   closeAllSheets();
+
+  if (typeof window.initPositionsManager === 'function') {
+    window.initPositionsManager();
+  } else if (typeof window.loadPositionsAndBalance === 'function') {
+    window.loadPositionsAndBalance({ force: true });
+  }
 }
 
 async function testApiConnection() {
@@ -877,8 +883,11 @@ async function executeBinancePosition() {
 
     closeAllSheets();
 
-    // Refresh balance in background
+    // Refresh balance and positions in background
     fetchBinanceBalance().catch(() => {});
+    if (typeof window.loadPositionsAndBalance === 'function') {
+      window.loadPositionsAndBalance({ force: true });
+    }
   } catch (err) {
     console.error('Order execution error:', err);
     showConfirmError(err.message || 'Order failed. Please verify your margin & API permissions.');

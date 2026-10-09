@@ -281,8 +281,11 @@ dom.rotateBtn.addEventListener('click', toggleLandscapeFullscreen);
 
 // Visibility Change (App resume)
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && state.symbol) {
-    fetchKlines(state.symbol, state.interval);
+  if (!document.hidden) {
+    if (state.symbol) fetchKlines(state.symbol, state.interval);
+    if (typeof window.loadPositionsAndBalance === 'function') {
+      window.loadPositionsAndBalance({ silent: true });
+    }
   }
 });
 
@@ -295,9 +298,13 @@ async function init() {
   renderQuickSwitcher();
   updateApiEnvDisplay();
   syncBinanceServerTime();
-  if (state.binanceApi.key && state.binanceApi.secret) {
-    loadPositionsAndBalance();
+
+  if (typeof window.initPositionsManager === 'function') {
+    window.initPositionsManager();
+  } else if (state.binanceApi.key && state.binanceApi.secret && typeof window.loadPositionsAndBalance === 'function') {
+    window.loadPositionsAndBalance();
   }
+
   await Promise.all([loadExchangeInfo(), load24hTickers()]);
   await fetchKlines(state.symbol, state.interval);
   connectWebSocket(state.symbol, state.interval);
@@ -305,8 +312,6 @@ async function init() {
   state.candleTimerInterval = window.setInterval(updateCountdownTimer, 1000);
   state.statRefreshInterval = window.setInterval(load24hTickers, 15000);
 }
-
-init();
 
 // Application Bootstrap
 if (document.readyState === 'loading') {

@@ -31,11 +31,11 @@
 
   <!-- Modular Stylesheets -->
   <!-- Cache-busted asset URLs (?v=) so clients always fetch the latest CSS/JS after a deploy -->
-  <link rel="stylesheet" href="css/base.css?v=20260928-2">
-  <link rel="stylesheet" href="css/chart.css?v=20260928-2">
-  <link rel="stylesheet" href="css/position-tool.css?v=20260928-2">
-  <link rel="stylesheet" href="css/sheets.css?v=20260928-2">
-  <link rel="stylesheet" href="css/ai-agent.css?v=20260928-2">
+  <link rel="stylesheet" href="css/base.css?v=20261009-1">
+  <link rel="stylesheet" href="css/chart.css?v=20261009-1">
+  <link rel="stylesheet" href="css/position-tool.css?v=20261009-1">
+  <link rel="stylesheet" href="css/sheets.css?v=20261009-1">
+  <link rel="stylesheet" href="css/ai-agent.css?v=20261009-1">
 </head>
 <body>
 
@@ -585,10 +585,14 @@
       <div class="sheet-header">
         <div class="pos-list-head-left">
           <span class="sheet-title">Binance Positions</span>
-          <span class="pos-env-tag live" id="pos-list-env-tag">LIVE</span>
+          <span class="pos-env-tag live" id="pos-list-env-tag">
+            <span class="pos-live-dot" id="pos-live-dot"></span>
+            <span id="pos-env-label">LIVE</span>
+          </span>
+          <span class="pos-realtime-badge" id="pos-realtime-badge" title="Live Realtime Sync Active">REALTIME</span>
         </div>
         <div class="pos-list-head-right">
-          <button type="button" class="pos-icon-btn" id="btn-refresh-positions" title="Refresh Positions & Balance">🔄</button>
+          <button type="button" class="pos-icon-btn" id="btn-refresh-positions" title="Refresh Positions & Balance (Auto-syncs live)">🔄</button>
           <button type="button" class="sheet-close-btn" id="pos-list-close">&times;</button>
         </div>
       </div>
@@ -1211,14 +1215,14 @@
 
 
   <!-- Application Logic Modules -->
-  <script src="js/config.js?v=20260928-2"></script>
-  <script src="js/utils.js?v=20260928-2"></script>
-  <script src="js/chart.js?v=20260928-2"></script>
-  <script src="js/ui.js?v=20260928-2"></script>
-  <script src="js/position-tool.js?v=20260928-2"></script>
-  <script src="js/binance-api.js?v=20260928-2"></script>
-  <script src="js/positions-manager.js?v=20260928-2"></script>
-  <script src="js/ai-agent.js?v=20260928-2"></script>
-  <script src="js/app.js?v=20260928-2"></script>
+  <script src="js/config.js?v=20261009-1"></script>
+  <script src="js/utils.js?v=20261009-1"></script>
+  <script src="js/chart.js?v=20261009-1"></script>
+  <script src="js/ui.js?v=20261009-1"></script>
+  <script src="js/position-tool.js?v=20261009-1"></script>
+  <script src="js/binance-api.js?v=20261009-1"></script>
+  <script src="js/positions-manager.js?v=20261009-1"></script>
+  <script src="js/ai-agent.js?v=20261009-1"></script>
+  <script src="js/app.js?v=20261009-1"></script>
 </body>
 </html>

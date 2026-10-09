@@ -1277,6 +1277,61 @@
   align-items: center;
   gap: 8px;
 }
+.pos-env-tag {
+  font-size: 10px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.2;
+}
+.pos-env-tag.live {
+  background: rgba(14, 203, 129, 0.12);
+  color: var(--color-bull);
+  border: 1px solid rgba(14, 203, 129, 0.3);
+}
+.pos-env-tag.testnet {
+  background: rgba(240, 185, 11, 0.12);
+  color: var(--binance-gold);
+  border: 1px solid rgba(240, 185, 11, 0.3);
+}
+.pos-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-bull);
+  box-shadow: 0 0 6px rgba(14, 203, 129, 0.85);
+  animation: posPulse 1.8s ease-in-out infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.pos-env-tag.testnet .pos-live-dot {
+  background: var(--binance-gold);
+  box-shadow: 0 0 6px rgba(240, 185, 11, 0.85);
+}
+@keyframes posPulse {
+  0% { transform: scale(0.85); opacity: 0.55; }
+  50% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(0.85); opacity: 0.55; }
+}
+.pos-realtime-badge {
+  font-size: 9px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(14, 203, 129, 0.08);
+  color: var(--color-bull);
+  border: 1px solid rgba(14, 203, 129, 0.22);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
 .pos-list-head-right {
   display: flex;
   align-items: center;
@@ -1453,6 +1508,7 @@
   font-weight: 800;
   font-family: var(--font-mono);
   text-align: right;
+  transition: color 0.15s ease;
 }
 .pos-card-pnl.bull { color: var(--color-bull); }
 .pos-card-pnl.bear { color: var(--color-bear); }
@@ -1460,6 +1516,15 @@
   font-size: 11px;
   font-weight: 700;
   margin-left: 2px;
+}
+.pos-val-mark {
+  transition: color 0.15s ease;
+}
+.pos-val-mark.tick-up {
+  color: var(--color-bull) !important;
+}
+.pos-val-mark.tick-down {
+  color: var(--color-bear) !important;
 }
 .pos-card-grid {
   display: grid;
