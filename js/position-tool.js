@@ -5,8 +5,8 @@
 // =========================================================
 // TradingView-Style Long / Short Position Drawing Tool
 // =========================================================
-// Default risk/reward for manually drawn positions (1:1.3)
-var DEFAULT_RR = 1.3;
+// Default risk/reward for manually drawn positions (1:0.7)
+var DEFAULT_RR = 0.7;
 
 var positionState = {
   active: false,

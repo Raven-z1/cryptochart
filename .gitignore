@@ -19,3 +19,4 @@ node_modules/
 .l2s.*
 index2.html
 __pycache__/
+.git-token
