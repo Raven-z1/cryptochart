@@ -479,6 +479,8 @@ html, body {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
   z-index: 30;
   box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.4);
 }
@@ -509,15 +511,21 @@ html, body {
 }
 
 
-/* Bottom Action Buttons (Large Touch Targets 44px) */
+/* Bottom Action Buttons (Stretched dynamically across full screen width) */
 .dock-actions {
-  display: grid;
-  grid-template-columns: 0.85fr 1fr 1.15fr 1fr 0.95fr 1fr 0.85fr;
-  gap: 2px;
-  padding: 4px 3px calc(4px + env(safe-area-inset-bottom, 0px)) 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 4px;
+  padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px)) 6px;
+  box-sizing: border-box;
 }
 
 .dock-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
   height: 44px;
   background: transparent;
   border: 1px solid transparent;
@@ -771,10 +779,12 @@ input:checked + .slider:before {
   .range-hud-bar { height: 3px; }
   .range-hud-pin { width: 6px; height: 6px; }
   .dock-actions {
+    width: 100%;
     padding: 2px 4px 4px 4px;
     gap: 2px;
   }
   .dock-btn {
+    flex: 1 1 0;
     height: 32px;
   }
   .dock-btn > span {
