@@ -140,7 +140,7 @@ Your job is to analyze real-time pure raw OHLCV candle data and market structure
 RULES:
 1. For LONG: TP MUST be greater than Entry (TP > Entry). SL MUST be less than Entry (SL < Entry).
 2. For SHORT: TP MUST be less than Entry (TP < Entry). SL MUST be greater than Entry (SL > Entry).
-3. Risk-to-Reward ratio (R:R) MUST be between 1.5 and 3.5.
+3. Risk-to-Reward ratio (R:R) MUST be between 1.0 and 1.6. (Reward / Risk >= 1.0).
 4. Stop Loss MUST be placed beyond key structural price levels (recent swing high/low or wick rejections).
 5. Output strictly JSON matching:
 {{
@@ -186,7 +186,7 @@ Generate the JSON trade plan now."""
     entry = float(plan["entryPrice"])
     tp = float(plan["tpPrice"])
     sl = float(plan["slPrice"])
-    rr = float(plan.get("riskReward", 2.0))
+    rr = float(plan.get("riskReward", 1.0))
     conf = plan.get("confidence", 80)
     strat = plan.get("strategy", "Hugging Face AI Setup")
     rationale = plan.get("rationale", "")

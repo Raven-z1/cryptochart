@@ -56,7 +56,7 @@ CRITICAL MATHEMATICAL & RISK RULES:
 2. For SHORT positions:
    - Take Profit MUST be strictly less than Entry Price (TP < Entry).
    - Stop Loss MUST be strictly greater than Entry Price (SL > Entry).
-3. Risk-to-Reward ratio (R:R) MUST be between 1.5 and 3.5. (Reward / Risk >= 1.5).
+3. Risk-to-Reward ratio (R:R) MUST be between 1.0 and 1.6. (Reward / Risk >= 1.0).
 4. Realistic Stop Loss placement: Stop Loss should be anchored logically (e.g. beyond recent swing low/high, key price action structure, or wick rejection levels), NEVER zero and NEVER arbitrary.
 5. All price values must match the exact price scale and tick size of ${snapshot.symbol} (current price ~$${snapshot.currentPrice}).
 6. Strictly output ONLY a valid JSON object matching the schema below. No markdown backticks outside, no conversational preamble.
@@ -270,22 +270,22 @@ function parseAiResponse(rawContent, snapshot) {
   let sl = parseFloat(result.slPrice);
 
   if (!entry || isNaN(entry) || entry <= 0) entry = curPrice;
-  if (!tp || isNaN(tp) || tp <= 0) tp = isShort ? entry * 0.98 : entry * 1.02;
+  if (!tp || isNaN(tp) || tp <= 0) tp = isShort ? entry * 0.99 : entry * 1.01;
   if (!sl || isNaN(sl) || sl <= 0) sl = isShort ? entry * 1.01 : entry * 0.99;
 
   // Enforce logical validity
   if (isShort) {
-    if (tp >= entry) tp = entry * 0.98;
+    if (tp >= entry) tp = entry * 0.99;
     if (sl <= entry) sl = entry * 1.01;
   } else {
-    if (tp <= entry) tp = entry * 1.02;
+    if (tp <= entry) tp = entry * 1.01;
     if (sl >= entry) sl = entry * 0.99;
   }
 
   // Calculate actual R:R
   const risk = isShort ? (sl - entry) : (entry - sl);
   const reward = isShort ? (entry - tp) : (tp - entry);
-  const actualRr = (risk > 0 && reward > 0) ? (reward / risk) : 2.0;
+  const actualRr = (risk > 0 && reward > 0) ? (reward / risk) : 1.0;
 
   let conf = parseInt(result.confidence, 10);
   if (!Number.isFinite(conf)) conf = 75;
@@ -462,7 +462,7 @@ function renderAiResultCard(plan) {
   if (dom.aiResSl) dom.aiResSl.textContent = `$${formatPrice(sl)}`;
   if (dom.aiResSlPct) dom.aiResSlPct.textContent = `-${Math.abs(slPct).toFixed(2)}%`;
   const rr = Number(plan.riskReward);
-  if (dom.aiResRr) dom.aiResRr.textContent = (Number.isFinite(rr) && rr > 0) ? `1:${rr.toFixed(2)}` : '1:2.00';
+  if (dom.aiResRr) dom.aiResRr.textContent = (Number.isFinite(rr) && rr > 0) ? `1:${rr.toFixed(2)}` : '1:1.00';
 
   if (dom.aiRationaleTitle) dom.aiRationaleTitle.textContent = `Strategy: ${plan.strategy}`;
   if (dom.aiRationaleText) dom.aiRationaleText.textContent = plan.rationale;
