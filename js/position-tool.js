@@ -5,8 +5,8 @@
 // =========================================================
 // TradingView-Style Long / Short Position Drawing Tool
 // =========================================================
-// Default risk/reward for manually drawn positions (1:0.7)
-var DEFAULT_RR = 0.7;
+// Default risk/reward for manually drawn positions (1:1)
+var DEFAULT_RR = 1.0;
 
 var positionState = {
   active: false,
@@ -73,7 +73,7 @@ function drawPosition(type) {
   positionState.type = type;
   positionState.entryPrice = curPrice;
 
-  // Default 1:1.3 R:R setup (risk 1%)
+  // Default 1:1 R:R setup (risk 1%)
   const riskPct = 0.01;
   if (type === 'long') {
     positionState.slPrice = curPrice * (1 - riskPct);
@@ -114,7 +114,7 @@ function drawAiPosition(params) {
   let sl = parseFloat(params.slPrice !== undefined ? params.slPrice : (params.sl !== undefined ? params.sl : 0));
 
   if (!tp || isNaN(tp) || tp <= 0) {
-    tp = isShort ? entry * 0.98 : entry * 1.02;
+    tp = isShort ? entry * 0.99 : entry * 1.01;
   }
   if (!sl || isNaN(sl) || sl <= 0) {
     sl = isShort ? entry * 1.01 : entry * 0.99;
@@ -122,10 +122,10 @@ function drawAiPosition(params) {
 
   // Ensure TP and SL are logically valid for the position direction
   if (isShort) {
-    if (tp >= entry) tp = entry * 0.98;
+    if (tp >= entry) tp = entry * 0.99;
     if (sl <= entry) sl = entry * 1.01;
   } else {
-    if (tp <= entry) tp = entry * 1.02;
+    if (tp <= entry) tp = entry * 1.01;
     if (sl >= entry) sl = entry * 0.99;
   }
 
