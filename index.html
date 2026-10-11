@@ -992,8 +992,21 @@
           </div>
         </div>
 
+        <!-- Ingested Chart Data Context Card -->
+        <div class="ai-data-context-card">
+          <div class="ai-data-context-left">
+            <span class="ai-data-context-label">📊 Chart Data Ingested to AI:</span>
+            <div class="ai-data-badges">
+              <span class="ai-data-badge tf-badge" id="ai-context-timeframe">5m Timeframe</span>
+              <span class="ai-data-badge sym-badge" id="ai-context-symbol">BTCUSDC</span>
+              <span class="ai-data-badge candles-badge" id="ai-context-candles">40 Raw OHLCV Candles</span>
+            </div>
+          </div>
+          <span class="ai-data-context-note">Pure raw candle price action without indicators</span>
+        </div>
+
         <!-- Collapsible Gateway Settings Card -->
-        <div class="ai-config-card" id="ai-config-card">
+        <div class="ai-config-card hidden" id="ai-config-card">
           <div class="ai-config-title">
             <span>🔑 Hugging Face Gateway</span>
             <span class="ai-config-badge">OpenAI-Compatible</span>
@@ -1062,7 +1075,7 @@
         <!-- Loading State Card -->
         <div class="ai-loading-card hidden" id="ai-loading-card">
           <div class="ai-spinner"></div>
-          <div class="ai-loading-text" id="ai-loading-text">Analyzing BTCUSDT (5m)...</div>
+          <div class="ai-loading-text" id="ai-loading-text">Analyzing BTCUSDC (5m)...</div>
           <div class="ai-loading-subtext" id="ai-loading-subtext">Connecting to Hugging Face gateway...</div>
           <button type="button" class="ai-btn-cancel" id="btn-ai-cancel">✕ Cancel Analysis</button>
         </div>

@@ -416,10 +416,10 @@ function updateAiUiLoadingState(isLoading, actionType = 'auto') {
 
   if (isLoading) {
     if (dom.aiLoadingText) {
-      dom.aiLoadingText.textContent = `Analyzing ${state.symbol} (${state.interval})...`;
+      dom.aiLoadingText.textContent = `Analyzing ${state.symbol} (${state.interval} Timeframe)...`;
     }
     if (dom.aiLoadingSubtext) {
-      dom.aiLoadingSubtext.textContent = 'Preparing raw chart OHLCV candles and querying Hugging Face AI...';
+      dom.aiLoadingSubtext.textContent = `Feeding ${state.interval} raw OHLCV candles to Hugging Face AI...`;
     }
   }
 
@@ -470,7 +470,7 @@ function renderAiResultCard(plan) {
 
   if (dom.aiResultMeta) {
     const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    dom.aiResultMeta.textContent = `${state.aiAgent.model || 'openai/gpt-oss-120b'} · ${state.symbol} ${state.interval} · ${t}`;
+    dom.aiResultMeta.textContent = `${state.aiAgent.model || 'openai/gpt-oss-120b'} · ${state.symbol} · Timeframe: ${state.interval} · ${t}`;
   }
 
   dom.aiResultCard.classList.remove('hidden');
@@ -993,9 +993,12 @@ function openAiSheet() {
   openSheet(dom.aiBackdrop);
   updateGatewayStatusBadge();
 
-  // If no API key set yet, open config panel automatically
-  if (!state.aiAgent.apiKey && dom.aiConfigCard) {
-    dom.aiConfigCard.classList.remove('hidden');
+  // Populate ingested chart data context badges
+  if (dom.aiContextTimeframe) dom.aiContextTimeframe.textContent = `${state.interval} Timeframe`;
+  if (dom.aiContextSymbol) dom.aiContextSymbol.textContent = state.symbol;
+  if (dom.aiContextCandles) {
+    const count = (state.rawCandles || []).slice(-40).length;
+    dom.aiContextCandles.textContent = `${count} Raw OHLCV Candles`;
   }
 
   // If we already have a previous result, display it

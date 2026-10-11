@@ -148,6 +148,73 @@
   color: var(--text-main);
 }
 
+/* Ingested Chart Data Context Card */
+.ai-data-context-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ai-data-context-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-data-context-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: 0.2px;
+}
+
+.ai-data-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.ai-data-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.ai-data-badge.tf-badge {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #d8b4fe;
+}
+
+.ai-data-badge.sym-badge {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #7dd3fc;
+}
+
+.ai-data-badge.candles-badge {
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  color: #fde047;
+}
+
+.ai-data-context-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.3;
+}
+
 /* Collapsible Gateway Settings Box */
 .ai-config-card {
   background: var(--bg-card);
