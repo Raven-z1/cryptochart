@@ -46,8 +46,8 @@
         <!-- Symbol Trigger (Tap to open Market / Coins Bottom Sheet) -->
         <div class="symbol-nav-group">
           <div class="symbol-pill-trigger" id="open-market-btn" title="Select Coin (or type any letter)">
-            <span class="sym-name" id="head-symbol">BTCUSDT</span>
-            <span class="sym-tag cat-tag" id="head-cat-tag">GAINERS</span>
+            <span class="sym-name" id="head-symbol">BTCUSDC</span>
+            <span class="sym-tag cat-tag" id="head-cat-tag">USDC</span>
             <span class="sym-arrow">▼</span>
           </div>
         </div>
@@ -121,7 +121,7 @@
           <span class="stat-dist dist-bull" id="stat-low-dist">--</span>
         </div>
         <div class="stat-col">
-          <span class="lbl">24h Vol (USDT)</span>
+          <span class="lbl">24h Vol (USDC)</span>
           <span class="val" id="stat-turnover">--</span>
         </div>
         <div class="stat-col clickable" id="col-24h-range" title="Position in 24h Range">
@@ -182,7 +182,7 @@
       </div>
 
       <!-- Watermark -->
-      <div class="chart-watermark" id="chart-watermark">BTCUSDT 5M</div>
+      <div class="chart-watermark" id="chart-watermark">BTCUSDC 5M</div>
 
       <!-- Canvas for TradingView Lightweight Charts -->
       <div id="chart-container"></div>
@@ -333,9 +333,7 @@
         </form>
       </div>
       <div class="sheet-filter-tabs">
-        <button class="sheet-tab-btn active" data-filter="gainers">🚀 Gainers</button>
-        <button class="sheet-tab-btn" data-filter="volume">🔥 Volume</button>
-        <button class="sheet-tab-btn" data-filter="losers">📉 Losers</button>
+        <button class="sheet-tab-btn active" data-filter="usdc">🪙 USDC Pairs</button>
         <button class="sheet-tab-btn" data-filter="watchlist">⭐ Watchlist</button>
       </div>
       <div class="sheet-coin-list" id="sheet-coin-list">
@@ -442,26 +440,26 @@
           <div class="confirm-summary-header">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span class="confirm-type-tag" id="confirm-type-tag">LONG</span>
-              <span class="confirm-sym" id="confirm-sym">BTCUSDT</span>
+              <span class="confirm-sym" id="confirm-sym">BTCUSDC</span>
             </div>
             <span class="confirm-curr-price" id="confirm-curr-price">Market: $--.--</span>
           </div>
 
-          <!-- Order Type Selector -->
+          <!-- Order Type Selector (Limit Orders Enforced) -->
           <div class="confirm-field-group">
             <div class="confirm-field-header">
               <label class="confirm-field-lbl">Order Type</label>
+              <span style="font-size: 11px; color: var(--binance-gold); font-weight: 600;">Limit Order (GTC)</span>
             </div>
             <div class="confirm-toggle-group">
-              <button type="button" class="confirm-type-btn active" id="btn-ordertype-market">MARKET</button>
-              <button type="button" class="confirm-type-btn" id="btn-ordertype-limit">LIMIT</button>
+              <button type="button" class="confirm-type-btn active" id="btn-ordertype-limit">LIMIT</button>
             </div>
           </div>
 
-          <!-- Limit Price (Visible only when LIMIT selected) -->
-          <div class="confirm-field-group hidden" id="confirm-limit-price-group">
+          <!-- Limit Price -->
+          <div class="confirm-field-group" id="confirm-limit-price-group">
             <div class="confirm-field-header">
-              <label class="confirm-field-lbl">Limit Price ($)</label>
+              <label class="confirm-field-lbl">Limit Entry Price ($)</label>
             </div>
             <input type="number" step="any" class="pos-num-input" id="confirm-limit-price" placeholder="Limit Price">
           </div>
@@ -484,7 +482,7 @@
           <!-- Position Size / Margin Input -->
           <div class="confirm-field-group">
             <div class="confirm-field-header">
-              <label class="confirm-field-lbl">Position Size (USDT)</label>
+              <label class="confirm-field-lbl">Position Size (USDC)</label>
               <span class="confirm-avail-bal" id="confirm-avail-bal">Avail: $--.--</span>
             </div>
             <div class="confirm-size-input-wrap">
@@ -493,7 +491,7 @@
               <span class="size-equiv" id="confirm-size-equiv">≈ 0.000 QTY</span>
             </div>
             <div class="confirm-size-subline">
-              <span class="confirm-margin-cost-lbl" id="confirm-margin-cost-lbl">Margin Cost: $0.00 USDT</span>
+              <span class="confirm-margin-cost-lbl" id="confirm-margin-cost-lbl">Margin Cost: $0.00 USDC</span>
               <span class="confirm-sl-dist-lbl" id="confirm-sl-dist-lbl">SL Dist: 0.0%</span>
             </div>
             <!-- Quick Chips for Manual Size -->
@@ -557,7 +555,7 @@
             </div>
             <div class="plan-item">
               <span class="plan-lbl">Exchange TP/SL</span>
-              <span class="plan-val gold" style="font-size: 10px;">Native Bracket</span>
+              <span class="plan-val gold" style="font-size: 10px;">Limit Bracket (TP/SL)</span>
             </div>
           </div>
         </div>
@@ -604,7 +602,7 @@
               <span class="bal-lbl">Total Wallet Balance</span>
               <div class="bal-val-wrap">
                 <span class="bal-val" id="bal-total-wallet">$0.00</span>
-                <span class="bal-unit">USDT</span>
+                <span class="bal-unit">USDC</span>
               </div>
             </div>
             <div class="bal-col right">

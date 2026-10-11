@@ -130,12 +130,12 @@ window.drawAiPosition({
 
 #### URL Deep-Link:
 ```
-http://localhost:8000/index.html?symbol=BTCUSDT&pos=long&entry=64250&tp=65800&sl=63500&note=HF
+http://localhost:8000/index.html?symbol=BTCUSDC&pos=long&entry=64250&tp=65800&sl=63500&note=HF
 ```
 
 #### Autonomous Python Agent:
 Run the standalone AI agent script powered by Hugging Face:
 ```bash
 export HUGGINGFACE_API_KEY="your-huggingface-api-key"
-python3 agent/huggingface_agent.py --symbol BTCUSDT --timeframe 5m --direction auto --open
+python3 agent/huggingface_agent.py --symbol BTCUSDC --timeframe 5m --direction auto --open
 ```

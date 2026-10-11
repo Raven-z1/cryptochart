@@ -213,16 +213,18 @@ async function fetchBinanceBalance() {
     if (!state.binanceApi.key || !state.binanceApi.secret) return null;
     const balances = await binanceSignedRequest('/fapi/v2/balance', 'GET');
     if (Array.isArray(balances)) {
+      const usdc = balances.find(b => b.asset === 'USDC');
       const usdt = balances.find(b => b.asset === 'USDT');
-      if (usdt) {
-        const avail = parseFloat(usdt.availableBalance || usdt.balance || 0);
-        const total = parseFloat(usdt.balance || usdt.availableBalance || 0);
+      const targetBal = (usdc && (parseFloat(usdc.balance || 0) > 0 || parseFloat(usdc.availableBalance || 0) > 0)) ? usdc : (usdc || usdt);
+      if (targetBal) {
+        const avail = parseFloat(targetBal.availableBalance || targetBal.balance || 0);
+        const total = parseFloat(targetBal.balance || targetBal.availableBalance || 0);
         state.binanceApi.availBalance = avail;
         state.binanceApi.totalBalance = total;
         if (dom.confirmAvailBal) {
-          dom.confirmAvailBal.textContent = `Avail: $${avail.toFixed(2)} USDT`;
+          dom.confirmAvailBal.textContent = `Avail: $${avail.toFixed(2)} ${targetBal.asset}`;
         }
-        return { avail, total };
+        return { avail, total, asset: targetBal.asset };
       }
     }
   } catch (err) {
@@ -363,12 +365,15 @@ async function testApiConnection() {
   try {
     await syncBinanceServerTime();
     const balances = await binanceSignedRequest('/fapi/v2/balance', 'GET');
+    const usdc = Array.isArray(balances) ? balances.find(b => b.asset === 'USDC') : null;
     const usdt = Array.isArray(balances) ? balances.find(b => b.asset === 'USDT') : null;
-    const avail = usdt ? parseFloat(usdt.availableBalance || 0).toFixed(2) : '0.00';
+    const targetBal = (usdc && (parseFloat(usdc.balance || 0) > 0 || parseFloat(usdc.availableBalance || 0) > 0)) ? usdc : (usdc || usdt);
+    const avail = targetBal ? parseFloat(targetBal.availableBalance || 0).toFixed(2) : '0.00';
+    const asset = targetBal ? targetBal.asset : 'USDC';
 
     if (dom.apiTestResult) {
       dom.apiTestResult.className = 'api-test-result success';
-      dom.apiTestResult.textContent = `✅ Success! Futures API authenticated. Available: $${avail} USDT.`;
+      dom.apiTestResult.textContent = `✅ Success! Futures API authenticated. Available: $${avail} ${asset}.`;
     }
   } catch (err) {
     if (dom.apiTestResult) {
@@ -502,7 +507,7 @@ function updateConfirmCalculations() {
     dom.confirmSlDistLbl.textContent = `SL Dist: ${slDistPct.toFixed(2)}%`;
   }
   if (dom.confirmMarginCostLbl) {
-    dom.confirmMarginCostLbl.textContent = `Margin Cost: $${marginCost.toFixed(2)} USDT`;
+    dom.confirmMarginCostLbl.textContent = `Margin Cost: $${marginCost.toFixed(2)} USDC`;
   }
   if (dom.confirmPlanNotional) {
     dom.confirmPlanNotional.textContent = `$${positionNotional.toFixed(2)}`;
@@ -524,7 +529,7 @@ function updateConfirmCalculations() {
   if (entryPrice > 0 && positionNotional > 0) {
     const rawQty = positionNotional / entryPrice;
     const quantizedQty = quantizeQuantity(symbol, rawQty);
-    const baseAsset = symbol.replace(/USDT$/, '');
+    const baseAsset = symbol.replace(/USDC$/, '').replace(/USDT$/, '');
     if (dom.confirmSizeEquiv) {
       dom.confirmSizeEquiv.textContent = `≈ ${quantizedQty} ${baseAsset}`;
     }
@@ -545,13 +550,13 @@ function updateConfirmCalculations() {
     }
 
     if (positionNotional < minNotional) {
-      showConfirmError(`⚠️ Position size is below minimum notional ($${minNotional} USDT). Current: $${positionNotional.toFixed(1)}`);
+      showConfirmError(`⚠️ Position size is below minimum notional ($${minNotional} USDC). Current: $${positionNotional.toFixed(1)}`);
       if (dom.btnConfirmSubmit) dom.btnConfirmSubmit.disabled = true;
     } else if (quantizedQty < minQty) {
       showConfirmError(`⚠️ Quantity (${quantizedQty}) is below minimum (${minQty} ${baseAsset}). Increase size.`);
       if (dom.btnConfirmSubmit) dom.btnConfirmSubmit.disabled = true;
     } else if (state.binanceApi.availBalance !== null && marginCost > state.binanceApi.availBalance) {
-      showConfirmError(`⚠️ Required margin ($${marginCost.toFixed(2)}) exceeds available balance ($${state.binanceApi.availBalance.toFixed(2)} USDT). Increase leverage or decrease size.`);
+      showConfirmError(`⚠️ Required margin ($${marginCost.toFixed(2)}) exceeds available balance ($${state.binanceApi.availBalance.toFixed(2)} USDC). Increase leverage or decrease size.`);
       if (dom.btnConfirmSubmit) dom.btnConfirmSubmit.disabled = true;
     } else {
       hideConfirmError();
@@ -615,12 +620,11 @@ function openOrderConfirmationSheet() {
     dom.confirmLimitPrice.value = positionState.entryPrice.toFixed(getPrecision(state.symbol));
   }
 
-  // Order Type buttons setup
-  const isLimit = state.orderForm.type === 'LIMIT';
-  if (dom.btnOrderTypeMarket) dom.btnOrderTypeMarket.classList.toggle('active', !isLimit);
-  if (dom.btnOrderTypeLimit) dom.btnOrderTypeLimit.classList.toggle('active', isLimit);
-  if (dom.confirmLimitPriceGroup) dom.confirmLimitPriceGroup.classList.toggle('hidden', !isLimit);
-
+  // Enforce Limit Order mode
+  state.orderForm.type = 'LIMIT';
+  if (dom.btnOrderTypeLimit) dom.btnOrderTypeLimit.classList.add('active');
+  if (dom.btnOrderTypeMarket) dom.btnOrderTypeMarket.classList.remove('active');
+  if (dom.confirmLimitPriceGroup) dom.confirmLimitPriceGroup.classList.remove('hidden');
   // Setup default 5% risk sizing
   const curRisk = state.orderForm.riskPct || 5;
   document.querySelectorAll('.confirm-risk-btn').forEach(btn => {
@@ -653,8 +657,10 @@ function openOrderConfirmationSheet() {
 // Order Execution Pipeline
 let isExecutingOrder = false;
 
-// Helper to place Binance Futures Conditional TP/SL Orders via dedicated Algo Service
-async function placeAlgoConditionalOrder({ symbol, side, type, triggerPrice, orderQty, positionSide }) {
+// Helper to place Binance Futures Conditional TP/SL Limit Orders via dedicated Algo Service
+async function placeAlgoConditionalOrder({ symbol, side, type, triggerPrice, price, orderQty, positionSide }) {
+  const limitPrice = price || triggerPrice;
+
   // Strategy 1: Modern Binance USDⓈ-M algoOrder endpoint with closePosition: 'true' (No quantity required)
   try {
     const params = {
@@ -663,8 +669,10 @@ async function placeAlgoConditionalOrder({ symbol, side, type, triggerPrice, ord
       side,
       type,
       triggerPrice,
+      price: limitPrice,
       closePosition: 'true',
       workingType: 'MARK_PRICE',
+      timeInForce: 'GTC',
     };
     if (positionSide) params.positionSide = positionSide;
     return await binanceSignedRequest('/fapi/v1/algoOrder', 'POST', params);
@@ -686,9 +694,11 @@ async function placeAlgoConditionalOrder({ symbol, side, type, triggerPrice, ord
           side,
           type,
           triggerPrice,
+          price: limitPrice,
           quantity: orderQty,
           reduceOnly: 'true',
           workingType: 'MARK_PRICE',
+          timeInForce: 'GTC',
         };
         if (positionSide) params2.positionSide = positionSide;
         return await binanceSignedRequest('/fapi/v1/algoOrder', 'POST', params2);
@@ -697,15 +707,17 @@ async function placeAlgoConditionalOrder({ symbol, side, type, triggerPrice, ord
       }
     }
 
-    // Strategy 3: Legacy /fapi/v1/order with stopPrice and closePosition: 'true' (for older testnet/mock environments)
+    // Strategy 3: Legacy /fapi/v1/order with stopPrice, price, and closePosition: 'true' (for older testnet/mock environments)
     try {
       const legacyParams = {
         symbol,
         side,
         type,
         stopPrice: triggerPrice,
+        price: limitPrice,
         closePosition: 'true',
         workingType: 'MARK_PRICE',
+        timeInForce: 'GTC',
       };
       if (positionSide && positionSide !== 'BOTH') legacyParams.positionSide = positionSide;
       return await binanceSignedRequest('/fapi/v1/order', 'POST', legacyParams);
@@ -717,9 +729,11 @@ async function placeAlgoConditionalOrder({ symbol, side, type, triggerPrice, ord
           side,
           type,
           stopPrice: triggerPrice,
+          price: limitPrice,
           quantity: orderQty,
           reduceOnly: 'true',
           workingType: 'MARK_PRICE',
+          timeInForce: 'GTC',
         };
         if (positionSide && positionSide !== 'BOTH') legacyParams2.positionSide = positionSide;
         return await binanceSignedRequest('/fapi/v1/order', 'POST', legacyParams2);
@@ -741,12 +755,12 @@ async function executeBinancePosition() {
   const isLong = positionState.type === 'long';
   const primarySide = isLong ? 'BUY' : 'SELL';
   const exitSide = isLong ? 'SELL' : 'BUY';
-  const isLimit = state.orderForm.type === 'LIMIT';
+  const isLimit = true; // Enforced limit order for entry
   const leverage = state.orderForm.leverage || 10;
   const positionNotional = parseFloat(dom.confirmSizeUsdt ? dom.confirmSizeUsdt.value : 0) || 0;
 
   if (positionNotional <= 0) {
-    showConfirmError('Please specify a valid position size in USDT.');
+    showConfirmError('Please specify a valid position size in USDC.');
     return;
   }
 
@@ -821,64 +835,68 @@ async function executeBinancePosition() {
     const tpPriceStr = quantizePriceStr(symbol, positionState.tpPrice);
     const slPriceStr = quantizePriceStr(symbol, positionState.slPrice);
 
-    // Step 5: Place Primary Entry Order
+    // Step 5: Place Primary Entry Order as LIMIT Order (GTC)
     const primaryParams = {
       symbol,
       side: primarySide,
-      type: isLimit ? 'LIMIT' : 'MARKET',
+      type: 'LIMIT',
       quantity: orderQtyStr,
+      price: entryPriceStr,
+      timeInForce: 'GTC',
     };
     if (positionSide !== 'BOTH') {
       primaryParams.positionSide = positionSide;
     }
-    if (isLimit) {
-      primaryParams.timeInForce = 'GTC';
-      primaryParams.price = entryPriceStr;
-    }
 
     const primaryOrder = await binanceSignedRequest('/fapi/v1/order', 'POST', primaryParams);
-    console.log('Primary order placed successfully:', primaryOrder);
+    console.log('Primary limit order placed successfully:', primaryOrder);
 
-    // Step 6: Native Exchange Bracket TP & SL Orders via Binance Algo Order Service
+    // Step 6: Native Exchange Bracket TP & SL Orders via Limit Algo Orders
     let bracketWarning = '';
 
-    // Take Profit Order
-    try {
-      await placeAlgoConditionalOrder({
-        symbol,
-        side: exitSide,
-        type: 'TAKE_PROFIT_MARKET',
-        triggerPrice: tpPriceStr,
-        orderQty: orderQtyStr,
-        positionSide,
-      });
-    } catch (tpErr) {
-      console.error('Take Profit algo order failed:', tpErr);
-      bracketWarning += `TP failed: ${tpErr.message}. `;
+    // Take Profit Limit Order
+    if (positionState.tpPrice > 0) {
+      try {
+        await placeAlgoConditionalOrder({
+          symbol,
+          side: exitSide,
+          type: 'TAKE_PROFIT',
+          triggerPrice: tpPriceStr,
+          price: tpPriceStr,
+          orderQty: orderQtyStr,
+          positionSide,
+        });
+      } catch (tpErr) {
+        console.error('Take Profit limit algo order failed:', tpErr);
+        bracketWarning += `TP Limit failed: ${tpErr.message}. `;
+      }
     }
 
-    // Stop Loss Order
-    try {
-      await placeAlgoConditionalOrder({
-        symbol,
-        side: exitSide,
-        type: 'STOP_MARKET',
-        triggerPrice: slPriceStr,
-        orderQty: orderQtyStr,
-        positionSide,
-      });
-    } catch (slErr) {
-      console.error('Stop Loss algo order failed:', slErr);
-      bracketWarning += `SL failed: ${slErr.message}. `;
+    // Stop Loss Limit Order
+    if (positionState.slPrice > 0) {
+      try {
+        await placeAlgoConditionalOrder({
+          symbol,
+          side: exitSide,
+          type: 'STOP',
+          triggerPrice: slPriceStr,
+          price: slPriceStr,
+          orderQty: orderQtyStr,
+          positionSide,
+        });
+      } catch (slErr) {
+        console.error('Stop Loss limit algo order failed:', slErr);
+        bracketWarning += `SL Limit failed: ${slErr.message}. `;
+      }
     }
 
     haptic(35);
     playChime();
 
     if (bracketWarning) {
-      showToast(`Primary Order Filled! ⚠️ ${bracketWarning}Please check in Binance app.`, 7000);
+      showToast(`Primary Limit Order Placed! ⚠️ ${bracketWarning}Please check in Binance app.`, 7000);
     } else {
-      showToast(`🚀 ${positionState.type.toUpperCase()} position opened with Cross Margin & native TP/SL!`, 4000);
+      showToast(`🚀 ${positionState.type.toUpperCase()} Limit Order & Limit TP/SL placed successfully!`, 4000);
     }
 
     closeAllSheets();
@@ -939,10 +957,10 @@ if (dom.posConfirmBackdrop) {
 if (dom.btnOrderTypeMarket) {
   dom.btnOrderTypeMarket.addEventListener('click', () => {
     haptic(10);
-    state.orderForm.type = 'MARKET';
-    dom.btnOrderTypeMarket.classList.add('active');
-    if (dom.btnOrderTypeLimit) dom.btnOrderTypeLimit.classList.remove('active');
-    if (dom.confirmLimitPriceGroup) dom.confirmLimitPriceGroup.classList.add('hidden');
+    state.orderForm.type = 'LIMIT';
+    if (dom.btnOrderTypeLimit) dom.btnOrderTypeLimit.classList.add('active');
+    if (dom.btnOrderTypeMarket) dom.btnOrderTypeMarket.classList.remove('active');
+    if (dom.confirmLimitPriceGroup) dom.confirmLimitPriceGroup.classList.remove('hidden');
     updateConfirmCalculations();
   });
 }

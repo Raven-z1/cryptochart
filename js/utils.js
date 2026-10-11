@@ -119,7 +119,7 @@ function parseIntervalMs(intv) {
 // Helper: display name for coin chips (e.g. 1000PEPEUSDT -> PEPE, BTCUSDT -> BTC)
 function getCoinDisplayName(sym) {
   if (!sym) return '';
-  let base = sym.replace(/USDT$/, '').replace(/BUSD$/, '');
+  let base = sym.replace(/USDC$/, '').replace(/USDT$/, '').replace(/BUSD$/, '');
   if (base.startsWith('1000')) base = base.slice(4);
   return base;
 }

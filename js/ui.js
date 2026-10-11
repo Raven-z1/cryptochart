@@ -8,7 +8,7 @@ async function loadExchangeInfo() {
     const res = await fetch(`${CONFIG.restBase}/fapi/v1/exchangeInfo`);
     const data = await res.json();
     data.symbols.forEach(s => {
-      if (s.quoteAsset === 'USDT' && s.status === 'TRADING') {
+      if (s.quoteAsset === 'USDC' && s.status === 'TRADING') {
         const pf = s.filters.find(f => f.filterType === 'PRICE_FILTER');
         const lf = s.filters.find(f => f.filterType === 'LOT_SIZE');
         const nf = s.filters.find(f => f.filterType === 'MIN_NOTIONAL');
@@ -34,8 +34,8 @@ async function load24hTickers() {
     const list = await res.json();
     if (Array.isArray(list)) {
       state.allTickers = list
-        .filter(t => t.symbol && t.symbol.endsWith('USDT') && /^[A-Z0-9]+$/.test(t.symbol))
-        .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume));
+        .filter(t => t.symbol && t.symbol.endsWith('USDC') && /^[A-Z0-9]+$/.test(t.symbol))
+        .sort((a, b) => a.symbol.localeCompare(b.symbol));
       renderSheetCoins();
       renderQuickSwitcher();
       updateStatsRibbon();
@@ -226,7 +226,7 @@ function reanchorPositionToCandles() {
 }
 
 async function fetchKlines(symbol, interval) {
-  if (!symbol || typeof symbol !== 'string') symbol = state.symbol || 'BTCUSDT';
+  if (!symbol || typeof symbol !== 'string') symbol = state.symbol || 'BTCUSDC';
   if (!interval || typeof interval !== 'string' || !VALID_INTERVALS.includes(interval)) {
     interval = '5m';
     state.interval = '5m';
@@ -477,40 +477,23 @@ function getActiveCategorySymbols() {
     return (state.watchlist && state.watchlist.length > 0) ? state.watchlist : CONFIG.defaultWatchlist;
   }
 
-  const validPairs = state.allTickers.filter(t => t.symbol && t.symbol.endsWith('USDT') && /^[A-Z0-9]+$/.test(t.symbol));
+  const validPairs = state.allTickers.filter(t => t.symbol && t.symbol.endsWith('USDC') && /^[A-Z0-9]+$/.test(t.symbol));
 
-  if (state.activeCategory === 'gainers') {
-    return [...validPairs]
-      .sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent))
-      .slice(0, 50)
-      .map(t => t.symbol);
+  if (state.activeCategory === 'watchlist') {
+    return (state.watchlist && state.watchlist.length > 0) ? state.watchlist : CONFIG.defaultWatchlist;
   }
 
-  if (state.activeCategory === 'losers') {
-    return [...validPairs]
-      .sort((a, b) => parseFloat(a.priceChangePercent) - parseFloat(b.priceChangePercent))
-      .slice(0, 50)
-      .map(t => t.symbol);
-  }
-
-  if (state.activeCategory === 'volume') {
-    return [...validPairs]
-      .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-      .slice(0, 50)
-      .map(t => t.symbol);
-  }
-
-  // 'watchlist'
-  return (state.watchlist && state.watchlist.length > 0) ? state.watchlist : CONFIG.defaultWatchlist;
+  // Default: all USDC pairs
+  return validPairs.map(t => t.symbol);
 }
 
 function getCategoryDisplayName(cat) {
-  const labels = { gainers: 'Top Gainers', volume: 'Top Volume', losers: 'Top Losers', watchlist: 'Watchlist' };
-  return labels[cat] || 'Top Gainers';
+  const labels = { usdc: 'USDC Pairs', watchlist: 'Watchlist' };
+  return labels[cat] || 'USDC Pairs';
 }
 
 function setActiveCategory(cat) {
-  if (!['gainers', 'volume', 'losers', 'watchlist'].includes(cat)) cat = 'gainers';
+  if (!['usdc', 'watchlist'].includes(cat)) cat = 'usdc';
   state.activeCategory = cat;
   sheetFilter = cat;
   try {
@@ -522,13 +505,11 @@ function setActiveCategory(cat) {
 }
 
 function updateCategoryBadgeUI() {
-  const cat = state.activeCategory || 'gainers';
+  const cat = state.activeCategory || 'usdc';
   const meta = {
-    gainers: { icon: '🚀', label: 'GAINERS' },
-    volume: { icon: '🔥', label: 'VOLUME' },
-    losers: { icon: '📉', label: 'LOSERS' },
+    usdc: { icon: '🪙', label: 'USDC' },
     watchlist: { icon: '⭐', label: 'WATCH' },
-  }[cat] || { icon: '🚀', label: 'GAINERS' };
+  }[cat] || { icon: '🪙', label: 'USDC' };
 
   if (dom.quickCatIcon) dom.quickCatIcon.textContent = meta.icon;
   if (dom.quickCatName) dom.quickCatName.textContent = meta.label;
@@ -577,9 +558,9 @@ function switchChartNext() {
     nextSym = list[nextIdx];
   }
 
-  const cat = state.activeCategory || 'gainers';
-  const icons = { gainers: '🚀', volume: '🔥', losers: '📉', watchlist: '⭐' };
-  const icon = icons[cat] || '🚀';
+  const cat = state.activeCategory || 'usdc';
+  const icons = { usdc: '🪙', watchlist: '⭐' };
+  const icon = icons[cat] || '🪙';
   const t = state.allTickers.find(x => x.symbol === nextSym);
   let chgText = '';
   if (t) {
@@ -605,9 +586,9 @@ function switchChartPrev() {
     prevSym = list[prevIdx];
   }
 
-  const cat = state.activeCategory || 'gainers';
-  const icons = { gainers: '🚀', volume: '🔥', losers: '📉', watchlist: '⭐' };
-  const icon = icons[cat] || '🚀';
+  const cat = state.activeCategory || 'usdc';
+  const icons = { usdc: '🪙', watchlist: '⭐' };
+  const icon = icons[cat] || '🪙';
   const t = state.allTickers.find(x => x.symbol === prevSym);
   let chgText = '';
   if (t) {
@@ -711,40 +692,34 @@ function setTimeframe(intv) {
 }
 
 // Bottom Sheet Rendering: Coins List
-let sheetFilter = state.activeCategory || 'gainers';
+let sheetFilter = state.activeCategory || 'usdc';
 function renderSheetCoins() {
   if (!dom.sheetCoinList) return;
   const q = dom.coinSearchInput.value.trim().toUpperCase();
   let list = [...state.allTickers];
   if (q) list = list.filter(t => t.symbol.includes(q));
 
-  if (sheetFilter === 'gainers') {
-    list.sort((a, b) => parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent));
-  } else if (sheetFilter === 'losers') {
-    list.sort((a, b) => parseFloat(a.priceChangePercent) - parseFloat(b.priceChangePercent));
-  } else if (sheetFilter === 'watchlist') {
+  if (sheetFilter === 'watchlist') {
     const wl = state.watchlist || [];
     list = list.filter(t => wl.includes(t.symbol));
     list.sort((a, b) => wl.indexOf(a.symbol) - wl.indexOf(b.symbol));
   } else {
-    list.sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume));
+    list.sort((a, b) => a.symbol.localeCompare(b.symbol));
   }
 
   if (list.length === 0) {
-    dom.sheetCoinList.innerHTML = `<div style="padding:32px 16px;text-align:center;color:var(--text-muted);font-size:13px;">No matching pairs found</div>`;
+    dom.sheetCoinList.innerHTML = `<div style="padding:32px 16px;text-align:center;color:var(--text-muted);font-size:13px;">No matching USDC pairs found</div>`;
     return;
   }
 
-  dom.sheetCoinList.innerHTML = list.slice(0, 60).map(t => {
+  dom.sheetCoinList.innerHTML = list.map(t => {
     const chg = parseFloat(t.priceChangePercent);
     const isBull = chg >= 0;
     const isActive = t.symbol === state.symbol;
-    const volM = (parseFloat(t.quoteVolume) / 1e6).toFixed(1);
     return `
       <div class="coin-row ${isActive ? 'active' : ''}" data-symbol="${t.symbol}">
         <div class="cr-left">
           <span class="cr-symbol">${t.symbol}</span>
-          <span class="cr-vol">$${volM}M Vol</span>
         </div>
         <div class="cr-right">
           <span class="cr-price">${formatPrice(t.lastPrice, t.symbol)}</span>
@@ -819,10 +794,10 @@ function handlePairInput() {
   let raw = (dom.coinSearchInput.value || '').trim().toUpperCase();
   if (!raw) return;
 
-  // Auto-complete USDT if omitted
+  // Auto-complete USDC if omitted
   let candidate = raw;
-  if (!candidate.endsWith('USDT') && !candidate.endsWith('BUSD')) {
-    candidate = candidate + 'USDT';
+  if (!candidate.endsWith('USDC') && !candidate.endsWith('USDT') && !candidate.endsWith('BUSD')) {
+    candidate = candidate + 'USDC';
   }
 
   // 1. Direct match in allTickers
@@ -839,8 +814,9 @@ function handlePairInput() {
     return;
   }
 
-  // 3. Substring match (e.g. PEPE -> 1000PEPEUSDT, BONK -> 1000BONKUSDT)
-  const sub = state.allTickers.find(t => t.symbol.includes(raw.replace('USDT', '')));
+  // 3. Substring match (e.g. PEPE -> 1000PEPEUSDC, BONK -> 1000BONKUSDC)
+  const cleanRaw = raw.replace('USDC', '').replace('USDT', '').replace('BUSD', '');
+  const sub = state.allTickers.find(t => t.symbol.includes(cleanRaw));
   if (sub) {
     setSymbol(sub.symbol);
     return;

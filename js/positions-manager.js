@@ -42,7 +42,7 @@ function renderPositionCardHtml(pos) {
   const margin = leverage > 0 ? (notional / leverage) : 0;
   const roe = margin > 0 ? ((pnl / margin) * 100) : 0;
   const isPnlBull = pnl >= 0;
-  const baseAsset = sym.replace(/USDT$/, '');
+  const baseAsset = sym.replace(/USDC$/, '').replace(/USDT$/, '');
 
   return `
     <div class="pos-card" data-sym="${sym}">
@@ -72,7 +72,7 @@ function renderPositionCardHtml(pos) {
           <span class="pos-grid-val pos-val-mark">$${formatPrice(markPrice, sym)}</span>
         </div>
         <div class="pos-grid-cell">
-          <span class="pos-grid-lbl">Margin (USDT)</span>
+          <span class="pos-grid-lbl">Margin (USDC)</span>
           <span class="pos-grid-val pos-val-margin">$${margin.toFixed(2)}</span>
         </div>
         <div class="pos-grid-cell">
@@ -111,7 +111,7 @@ function updatePositionCard(card, pos, oldMark) {
   const margin = leverage > 0 ? (notional / leverage) : 0;
   const roe = margin > 0 ? ((pnl / margin) * 100) : 0;
   const isPnlBull = pnl >= 0;
-  const baseAsset = sym.replace(/USDT$/, '');
+  const baseAsset = sym.replace(/USDC$/, '').replace(/USDT$/, '');
 
   // PnL & ROE
   const pnlWrap = card.querySelector('.pos-card-pnl');

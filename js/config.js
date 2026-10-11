@@ -6,12 +6,12 @@ var CONFIG = {
   restBase: 'https://fapi.binance.com',
   wsBase: 'wss://fstream.binance.com/market/ws',
   wsStreamBase: 'wss://fstream.binance.com/market/stream',
-  defaultSymbol: 'BTCUSDT',
+  defaultSymbol: 'BTCUSDC',
   defaultInterval: '5m',
   candleLimit: 500,
   defaultWatchlist: [
-    'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT',
-    'DOGEUSDT', '1000PEPEUSDT', 'SUIUSDT', 'AVAXUSDT', 'LINKUSDT', 'NEARUSDT', 'ADAUSDT'
+    'BTCUSDC', 'ETHUSDC', 'SOLUSDC', 'BNBUSDC', 'XRPUSDC',
+    'DOGEUSDC', '1000PEPEUSDC', 'SUIUSDC', 'AVAXUSDC', 'LINKUSDC', 'NEARUSDC', 'ADAUSDC'
   ],
 };
 
@@ -22,9 +22,9 @@ var state = {
   activeCategory: (function () {
     try {
       const s = localStorage.getItem('cc_active_category');
-      if (['gainers', 'volume', 'losers', 'watchlist'].includes(s)) return s;
+      if (['usdc', 'watchlist'].includes(s)) return s;
     } catch (_) {}
-    return 'gainers';
+    return 'usdc';
   })(),
   chartStyle: (function () {
     try {
@@ -94,7 +94,7 @@ var state = {
     totalBalance: null,
   },
   orderForm: {
-    type: 'MARKET',
+    type: 'LIMIT',
     leverage: 10,
     riskPct: 5,
   },
