@@ -3,7 +3,7 @@
  */
 
 function haptic(duration = 15) {
-  if (state.alerts.vibrate && navigator.vibrate) {
+  if (navigator.vibrate) {
     try {
       navigator.vibrate(duration);
     } catch (e) {}
@@ -23,7 +23,7 @@ function showToast(msg, duration = 2000) {
 
 // Web Audio API Chime (Zero external dependencies)
 function playChime() {
-  if (!state.alerts.sound) return;
+  if (state.alerts && !state.alerts.sound) return;
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;

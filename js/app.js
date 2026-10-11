@@ -168,26 +168,6 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// Alert Sheet
-dom.openAlertBtn.addEventListener('click', () => openSheet(dom.alertBackdrop));
-dom.dockAlertBtn.addEventListener('click', () => openSheet(dom.alertBackdrop));
-dom.alertCloseBtn.addEventListener('click', closeAllSheets);
-dom.alertBackdrop.addEventListener('click', e => {
-  if (e.target === dom.alertBackdrop) closeAllSheets();
-});
-
-dom.togVibrate.addEventListener('change', e => {
-  state.alerts.vibrate = e.target.checked;
-  if (e.target.checked) haptic(30);
-});
-dom.togSound.addEventListener('change', e => {
-  state.alerts.sound = e.target.checked;
-  if (e.target.checked) playChime();
-});
-dom.togUrgency.addEventListener('change', e => {
-  state.alerts.urgency = e.target.checked;
-});
-
 // Timeframe Sheet Listeners (Slide-in from bottom)
 function openTimeframeSheet() {
   openSheet(dom.tfSheetBackdrop);

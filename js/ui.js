@@ -455,20 +455,6 @@ function updateCountdownTimer() {
     const secs = totalSec % 60;
     dom.candleTimer.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   }
-
-  if (state.alerts.urgency && totalSec <= 15) {
-    dom.candleTimer.classList.add('urgent');
-  } else {
-    dom.candleTimer.classList.remove('urgent');
-  }
-
-  // Trigger Candle Close Alert exactly once per candle close boundary
-  if (totalSec === 0 && state.lastAlertTriggeredTime !== state.currentCandleCloseTime) {
-    state.lastAlertTriggeredTime = state.currentCandleCloseTime;
-    haptic(80); // Android phone vibration
-    playChime(); // Audio chime
-    showToast(`🔔 ${state.symbol} ${state.interval} Candle Closed!`);
-  }
 }
 
 
@@ -661,13 +647,12 @@ function setSymbol(sym) {
   updateStatsRibbon();
 }
 
-// Update Timeframe UI (dock button, bottom sheet cards, watermark, alerts)
+// Update Timeframe UI (dock button, bottom sheet cards, watermark)
 function updateTimeframeUI() {
   const intv = state.interval;
   if (dom.dockTfBadge) dom.dockTfBadge.textContent = intv;
   if (dom.dockTfLabel) dom.dockTfLabel.textContent = `${intv} ▾`;
   if (dom.tfSheetCurrentBadge) dom.tfSheetCurrentBadge.textContent = `Current: ${intv}`;
-  if (dom.alertDockText) dom.alertDockText.textContent = `${intv} Alert`;
 
   // Highlight active timeframe card
   document.querySelectorAll('.tf-card').forEach(card => {
@@ -753,7 +738,6 @@ function closeAllSheets() {
   document.querySelectorAll('.sheet-backdrop').forEach(b => b.classList.remove('open'));
   if (dom.marketBackdrop) dom.marketBackdrop.classList.remove('open');
   if (dom.indBackdrop) dom.indBackdrop.classList.remove('open');
-  if (dom.alertBackdrop) dom.alertBackdrop.classList.remove('open');
   if (dom.viewSheetBackdrop) dom.viewSheetBackdrop.classList.remove('open');
   if (dom.posBackdrop) dom.posBackdrop.classList.remove('open');
   if (dom.posConfirmBackdrop) dom.posConfirmBackdrop.classList.remove('open');
