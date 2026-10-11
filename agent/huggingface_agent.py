@@ -53,46 +53,6 @@ def fetch_24h_ticker(symbol="BTCUSDC"):
         return json.loads(resp.read().decode("utf-8"))
 
 
-def calculate_atr(candles, period=14):
-    if len(candles) < period + 1:
-        return None
-    trs = []
-    for i in range(1, len(candles)):
-        h, l = candles[i]["high"], candles[i]["low"]
-        pc = candles[i - 1]["close"]
-        tr = max(h - l, abs(h - pc), abs(l - pc))
-        trs.append(tr)
-    atr = sum(trs[:period]) / period
-    for i in range(period, len(trs)):
-        atr = (atr * (period - 1) + trs[i]) / period
-    return atr
-
-
-def calculate_rsi(closes, period=14):
-    if len(closes) < period + 1:
-        return None
-    gains, losses = 0.0, 0.0
-    for i in range(1, period + 1):
-        d = closes[i] - closes[i - 1]
-        if d >= 0:
-            gains += d
-        else:
-            losses += abs(d)
-    avg_gain = gains / period
-    avg_loss = losses / period
-    for i in range(period + 1, len(closes)):
-        d = closes[i] - closes[i - 1]
-        if d >= 0:
-            avg_gain = (avg_gain * (period - 1) + d) / period
-            avg_loss = (avg_loss * (period - 1)) / period
-        else:
-            avg_gain = (avg_gain * (period - 1)) / period
-            avg_loss = (avg_loss * (period - 1) + abs(d)) / period
-    if avg_loss == 0:
-        return 100.0
-    rs = avg_gain / avg_loss
-    return 100.0 - (100.0 / (1.0 + rs))
-
 
 def call_huggingface(api_key, model, system_prompt, user_prompt, base_url=DEFAULT_HUGGINGFACE_BASE):
     endpoint = base_url.rstrip("/")
@@ -168,24 +128,20 @@ def main():
     ticker24h = fetch_24h_ticker(args.symbol)
 
     cur_price = candles[-1]["close"]
-    closes = [c["close"] for c in candles]
-    atr = calculate_atr(candles, 14)
-    rsi = calculate_rsi(closes, 14)
-
     high24h = float(ticker24h.get("highPrice", 0))
     low24h = float(ticker24h.get("lowPrice", 0))
 
-    print(f"[*] Live Price: ${cur_price:.2f} | ATR: ${atr:.2f} | RSI: {rsi:.1f} | 24h High: ${high24h:.2f} | 24h Low: ${low24h:.2f}")
+    print(f"[*] Live Price: ${cur_price:.2f} | 24h High: ${high24h:.2f} | 24h Low: ${low24h:.2f} | Candles: {len(candles)}")
     print(f"[*] Calling Hugging Face AI Gateway ({args.model})...")
 
     system_prompt = f"""You are an elite cryptocurrency futures technical analyst and algorithmic risk manager.
-Your job is to analyze real-time market data for {args.symbol} and output an optimal Long or Short position setup with Take Profit (TP) and Stop Loss (SL).
+Your job is to analyze real-time pure raw OHLCV candle data and market structure for {args.symbol} and output an optimal Long or Short position setup with Take Profit (TP) and Stop Loss (SL) without technical indicators.
 
 RULES:
 1. For LONG: TP MUST be greater than Entry (TP > Entry). SL MUST be less than Entry (SL < Entry).
 2. For SHORT: TP MUST be less than Entry (TP < Entry). SL MUST be greater than Entry (SL > Entry).
 3. Risk-to-Reward ratio (R:R) MUST be between 1.5 and 3.5.
-4. Stop Loss MUST be placed beyond key structural levels (or 1.5x-2.5x ATR).
+4. Stop Loss MUST be placed beyond key structural price levels (recent swing high/low or wick rejections).
 5. Output strictly JSON matching:
 {{
   "signal": "LONG" | "SHORT",
@@ -199,15 +155,21 @@ RULES:
   "invalidation": "<price or level that invalidates trade>"
 }}"""
 
-    user_prompt = f"""MARKET CONTEXT FOR {args.symbol} ({args.timeframe}):
+    prec = 4 if cur_price < 1 else 2
+    raw_window = candles[-40:]
+    formatted_candles = [
+        f"#{i+1} Open:{c['open']:.{prec}f} High:{c['high']:.{prec}f} Low:{c['low']:.{prec}f} Close:{c['close']:.{prec}f} Volume:{c['volume']}"
+        for i, c in enumerate(raw_window)
+    ]
+    raw_candles_str = "\n".join(formatted_candles)
+
+    user_prompt = f"""RAW OHLCV CANDLE DATA FOR {args.symbol} ({args.timeframe} Timeframe):
 - Current Price: ${cur_price}
-- ATR(14): ${atr:.2f}
-- RSI(14): {rsi:.1f}
 - 24h Range: Low ${low24h} to High ${high24h}
 - Direction Requested: {args.direction.upper()}
 - Strategy Focus: {args.strategy}
-
-Last 10 Closes: {[round(c, 2) for c in closes[-10:]]}
+- Total Raw Candles ({len(raw_window)}):
+{raw_candles_str}
 
 Generate the JSON trade plan now."""
 

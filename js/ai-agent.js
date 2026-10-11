@@ -1,110 +1,24 @@
 /**
  * Hugging Face AI Trading Agent Integration
- * Connects to Hugging Face (OpenAI-compatible AI Gateway) to analyze Binance 5m USDⓈ-M charts,
- * calculate technical indicators, and automatically draw Long / Short positions with TP & SL.
+ * ingest pure raw OHLCV candle data, and automatically draw Long / Short positions with TP & SL.
  */
 
 // =========================================================================
-// 1. TECHNICAL INDICATORS & MARKET CONTEXT HELPERS
+// 1. RAW MARKET CONTEXT & DATA INGESTION HELPERS
 // =========================================================================
 
-function computeEMA(prices, period) {
-  if (!prices || prices.length < period) return null;
-  const k = 2 / (period + 1);
-  let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-  for (let i = period; i < prices.length; i++) {
-    ema = prices[i] * k + ema * (1 - k);
-  }
-  return ema;
-}
-
-function computeATR(candles, period = 14) {
-  if (!candles || candles.length < period + 1) return null;
-  const trs = [];
-  for (let i = 1; i < candles.length; i++) {
-    const high = candles[i].high;
-    const low = candles[i].low;
-    const prevClose = candles[i - 1].close;
-    const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
-    trs.push(tr);
-  }
-  if (trs.length < period) return null;
-  let atr = trs.slice(0, period).reduce((a, b) => a + b, 0) / period;
-  for (let i = period; i < trs.length; i++) {
-    atr = (atr * (period - 1) + trs[i]) / period;
-  }
-  return atr;
-}
-
-function computeRSI(closes, period = 14) {
-  if (!closes || closes.length < period + 1) return null;
-  let gains = 0;
-  let losses = 0;
-  for (let i = 1; i <= period; i++) {
-    const diff = closes[i] - closes[i - 1];
-    if (diff >= 0) gains += diff;
-    else losses += Math.abs(diff);
-  }
-  let avgGain = gains / period;
-  let avgLoss = losses / period;
-
-  for (let i = period + 1; i < closes.length; i++) {
-    const diff = closes[i] - closes[i - 1];
-    if (diff >= 0) {
-      avgGain = (avgGain * (period - 1) + diff) / period;
-      avgLoss = (avgLoss * (period - 1)) / period;
-    } else {
-      avgGain = (avgGain * (period - 1)) / period;
-      avgLoss = (avgLoss * (period - 1) + Math.abs(diff)) / period;
-    }
-  }
-
-  if (avgLoss === 0) return 100;
-  const rs = avgGain / avgLoss;
-  return 100 - (100 / (1 + rs));
-}
-
-function computeBollingerBands(closes, period = 20, multiplier = 2) {
-  if (!closes || closes.length < period) return null;
-  const slice = closes.slice(-period);
-  const sma = slice.reduce((a, b) => a + b, 0) / period;
-  const variance = slice.reduce((sum, val) => sum + Math.pow(val - sma, 2), 0) / period;
-  const stdDev = Math.sqrt(variance);
-  return {
-    middle: sma,
-    upper: sma + multiplier * stdDev,
-    lower: sma - multiplier * stdDev,
-    bandwidthPct: sma > 0 ? ((multiplier * 2 * stdDev) / sma) * 100 : 0
-  };
-}
-
 /**
- * Compiles a rich quantitative market snapshot of the current chart
+ * Ingests pure raw OHLCV candle data from the current chart without indicators
  */
 function getMarketTechnicalSnapshot() {
   const candles = state.rawCandles || [];
   const curPrice = state.currentPrice || (candles.length ? candles[candles.length - 1].close : 0);
-  const closes = candles.map(c => c.close);
   const prec = getPrecision(state.symbol);
 
-  // Indicators
-  const ema9 = computeEMA(closes, 9);
-  const ema21 = computeEMA(closes, 21);
-  const ema50 = computeEMA(closes, 50);
-  const atr = computeATR(candles, 14);
-  const rsi = computeRSI(closes, 14);
-  const bb = computeBollingerBands(closes, 20, 2);
-
-  // Swing Highs & Lows in recent 30 candles
-  const recentWindow = candles.slice(-30);
-  const windowHigh = recentWindow.length ? Math.max(...recentWindow.map(c => c.high)) : curPrice;
-  const windowLow = recentWindow.length ? Math.min(...recentWindow.map(c => c.low)) : curPrice;
-
-  // Last 12 candles compact representation
-  const recentCandleSummary = candles.slice(-12).map((c, i) => {
-    const isBull = c.close >= c.open;
-    const chg = c.open > 0 ? (((c.close - c.open) / c.open) * 100).toFixed(2) : '0';
-    return `[#${i + 1} O:${c.open.toFixed(prec)} H:${c.high.toFixed(prec)} L:${c.low.toFixed(prec)} C:${c.close.toFixed(prec)} (${isBull ? '+' : ''}${chg}%) Vol:${Math.round(c.volume)}]`;
+  // Ingest raw OHLCV candle data (last 40 candles)
+  const rawWindow = candles.slice(-40);
+  const formattedRawCandles = rawWindow.map((c, i) => {
+    return `#${i + 1} Open:${c.open.toFixed(prec)} High:${c.high.toFixed(prec)} Low:${c.low.toFixed(prec)} Close:${c.close.toFixed(prec)} Volume:${c.volume}`;
   });
 
   return {
@@ -114,26 +28,8 @@ function getMarketTechnicalSnapshot() {
     precision: prec,
     high24h: state.high24h,
     low24h: state.low24h,
-    indicators: {
-      atr: atr ? parseFloat(atr.toFixed(prec)) : null,
-      rsi: rsi ? parseFloat(rsi.toFixed(1)) : null,
-      ema9: ema9 ? parseFloat(ema9.toFixed(prec)) : null,
-      ema21: ema21 ? parseFloat(ema21.toFixed(prec)) : null,
-      ema50: ema50 ? parseFloat(ema50.toFixed(prec)) : null,
-      bb: bb ? {
-        upper: parseFloat(bb.upper.toFixed(prec)),
-        middle: parseFloat(bb.middle.toFixed(prec)),
-        lower: parseFloat(bb.lower.toFixed(prec)),
-        bandwidthPct: parseFloat(bb.bandwidthPct.toFixed(2))
-      } : null,
-    },
-    levels: {
-      recentSwingHigh30: parseFloat(windowHigh.toFixed(prec)),
-      recentSwingLow30: parseFloat(windowLow.toFixed(prec)),
-      distTo24hHighPct: (state.high24h > 0 && curPrice > 0) ? parseFloat((((curPrice - state.high24h) / state.high24h) * 100).toFixed(2)) : 0,
-      distTo24hLowPct: (state.low24h > 0 && curPrice > 0) ? parseFloat((((curPrice - state.low24h) / state.low24h) * 100).toFixed(2)) : 0
-    },
-    recentCandles: recentCandleSummary
+    rawCandles: formattedRawCandles,
+    candleCount: formattedRawCandles.length
   };
 }
 
@@ -149,8 +45,8 @@ function buildAiPrompt(actionType, userNote = '') {
   const prec = snapshot.precision;
 
   const systemPrompt = `You are an elite cryptocurrency futures algorithmic trading agent and quantitative risk manager.
-Your job is to analyze live Binance USDⓈ-M candle data, market structure, volatility, and technical indicators to construct an optimal SCALP trade setup.
-You must independently select the single best scalping strategy for the current chart timeframe and live market conditions — no preset strategy template is provided.
+Your job is to analyze live Binance USDⓈ-M pure raw OHLCV candle data and market structure to construct an optimal SCALP trade setup without technical indicators.
+You must independently select the single best price-action scalping strategy for the current chart timeframe and live market conditions — no preset strategy template is provided.
 You must output a precise trade recommendation with ENTRY, TAKE PROFIT (TP), and STOP LOSS (SL) price levels.
 
 CRITICAL MATHEMATICAL & RISK RULES:
@@ -161,7 +57,7 @@ CRITICAL MATHEMATICAL & RISK RULES:
    - Take Profit MUST be strictly less than Entry Price (TP < Entry).
    - Stop Loss MUST be strictly greater than Entry Price (SL > Entry).
 3. Risk-to-Reward ratio (R:R) MUST be between 1.5 and 3.5. (Reward / Risk >= 1.5).
-4. Realistic Stop Loss placement: Stop Loss should be anchored logically (e.g. beyond recent swing low/high, outside Bollinger Band, or 1.5x - 2.5x ATR distance), NEVER zero and NEVER arbitrary.
+4. Realistic Stop Loss placement: Stop Loss should be anchored logically (e.g. beyond recent swing low/high, key price action structure, or wick rejection levels), NEVER zero and NEVER arbitrary.
 5. All price values must match the exact price scale and tick size of ${snapshot.symbol} (current price ~$${snapshot.currentPrice}).
 6. Strictly output ONLY a valid JSON object matching the schema below. No markdown backticks outside, no conversational preamble.
 
@@ -173,8 +69,8 @@ REQUIRED JSON SCHEMA:
   "slPrice": <number>,
   "riskReward": <number>,
   "confidence": <integer 50-95>,
-  "strategy": "<Strategy Name, e.g. 5m Liquidity Sweep Reversal, EMA Pullback, Breakout Continuation>",
-  "rationale": "<2-3 clear, actionable sentences explaining technical reasoning, key level tested, and confluence>",
+  "strategy": "<Strategy Name, e.g. 5m Liquidity Sweep Reversal, Order Block Rejection, Breakout Continuation>",
+  "rationale": "<2-3 clear, actionable sentences explaining technical reasoning, key level tested, and price action confluence>",
   "invalidation": "<exact price or market event that completely invalidates this trade setup>"
 }`;
 
@@ -187,21 +83,13 @@ REQUIRED JSON SCHEMA:
     actionDirective = 'Evaluate current trend, momentum, and volatility. Determine whether a LONG or SHORT setup offers superior risk/reward right now.';
   }
 
-  const userPrompt = `MARKET SNAPSHOT FOR ${snapshot.symbol} (${snapshot.interval} Timeframe):
-- Current Live Price: $${snapshot.currentPrice}
+  const userPrompt = `RAW OHLCV CANDLE DATA FOR ${snapshot.symbol} (${snapshot.interval} Timeframe):
+- Current Price: $${snapshot.currentPrice}
 - 24h High: $${snapshot.high24h} | 24h Low: $${snapshot.low24h}
-- Technical Indicators:
-  * ATR (14): $${snapshot.indicators.atr || 'N/A'} (Typical candle volatility range)
-  * RSI (14): ${snapshot.indicators.rsi || 'N/A'}
-  * EMA 9: $${snapshot.indicators.ema9 || 'N/A'}
-  * EMA 21: $${snapshot.indicators.ema21 || 'N/A'}
-  * EMA 50: $${snapshot.indicators.ema50 || 'N/A'}
-  * Bollinger Bands (20,2): Upper $${snapshot.indicators.bb ? snapshot.indicators.bb.upper : 'N/A'}, Mid $${snapshot.indicators.bb ? snapshot.indicators.bb.middle : 'N/A'}, Lower $${snapshot.indicators.bb ? snapshot.indicators.bb.lower : 'N/A'}
-- Recent 30-Candle Swing High: $${snapshot.levels.recentSwingHigh30} | Swing Low: $${snapshot.levels.recentSwingLow30}
-- Recent 12 Candlesticks (Oldest to Newest):
-${snapshot.recentCandles.join('\n')}
+- Total Raw Candles (${snapshot.candleCount}):
+${snapshot.rawCandles.join('\n')}
 
-STRATEGY: No preset template — choose your own best scalping strategy for the ${snapshot.interval} timeframe based on the data above, and state its name in "strategy".
+STRATEGY: No preset template — choose your own best scalping strategy for the ${snapshot.interval} timeframe based on the raw OHLCV price action data above, and state its name in "strategy".
 USER REQUEST / NOTES: ${userNote || 'None'}
 DIRECTIVE: ${actionDirective}
 
@@ -531,7 +419,7 @@ function updateAiUiLoadingState(isLoading, actionType = 'auto') {
       dom.aiLoadingText.textContent = `Analyzing ${state.symbol} (${state.interval})...`;
     }
     if (dom.aiLoadingSubtext) {
-      dom.aiLoadingSubtext.textContent = 'Calculating ATR, RSI, EMAs, and querying Hugging Face AI...';
+      dom.aiLoadingSubtext.textContent = 'Preparing raw chart OHLCV candles and querying Hugging Face AI...';
     }
   }
 
