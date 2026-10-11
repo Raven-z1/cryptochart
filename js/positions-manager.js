@@ -389,22 +389,46 @@ async function loadPositionsAndBalance(options = {}) {
 
     await syncBinanceServerTime();
 
-    // Fetch account data and position risks in parallel
-    const [accountData, riskData] = await Promise.all([
+    // Fetch account data, position risks, and asset balances in parallel
+    const [accountData, riskData, balanceData] = await Promise.all([
       binanceSignedRequest('/fapi/v2/account', 'GET'),
-      binanceSignedRequest('/fapi/v2/positionRisk', 'GET').catch(() => null)
+      binanceSignedRequest('/fapi/v2/positionRisk', 'GET').catch(() => null),
+      binanceSignedRequest('/fapi/v2/balance', 'GET').catch(() => null),
     ]);
 
-    // Account Balance Overview
-    const walletBalance = parseFloat(accountData.totalWalletBalance || 0);
-    const marginBalance = parseFloat(accountData.totalMarginBalance || 0);
-    const unrealizedProfit = parseFloat(accountData.totalUnrealizedProfit || 0);
-    const availableBalance = parseFloat(accountData.availableBalance || 0);
+    // Account Balance Overview: Prioritize USDC balances over USDT
+    const usdcAsset = Array.isArray(accountData?.assets) ? accountData.assets.find(a => a.asset === 'USDC') : null;
+    const usdcBal = Array.isArray(balanceData) ? balanceData.find(b => b.asset === 'USDC') : null;
+
+    const usdtAsset = Array.isArray(accountData?.assets) ? accountData.assets.find(a => a.asset === 'USDT') : null;
+    const usdtBal = Array.isArray(balanceData) ? balanceData.find(b => b.asset === 'USDT') : null;
+
+    // Extract USDC amounts
+    const usdcWallet = parseFloat(usdcAsset?.walletBalance || usdcBal?.balance || usdcBal?.crossWalletBalance || 0);
+    const usdcAvail = parseFloat(usdcAsset?.availableBalance || usdcBal?.availableBalance || usdcBal?.maxWithdrawAmount || usdcWallet);
+    const usdcUnrealized = parseFloat(usdcAsset?.unrealizedProfit || usdcBal?.crossUnPnl || 0);
+    const usdcMargin = parseFloat(usdcAsset?.marginBalance || (usdcWallet + usdcUnrealized));
+
+    // Extract USDT amounts as fallback
+    const usdtWallet = parseFloat(usdtAsset?.walletBalance || usdtBal?.balance || usdtBal?.crossWalletBalance || accountData?.totalWalletBalance || 0);
+    const usdtAvail = parseFloat(usdtAsset?.availableBalance || usdtBal?.availableBalance || usdtBal?.maxWithdrawAmount || accountData?.availableBalance || usdtWallet);
+    const usdtUnrealized = parseFloat(usdtAsset?.unrealizedProfit || usdtBal?.crossUnPnl || accountData?.totalUnrealizedProfit || 0);
+    const usdtMargin = parseFloat(usdtAsset?.marginBalance || accountData?.totalMarginBalance || (usdtWallet + usdtUnrealized));
+
+    // Determine target asset: Prioritize USDC if available or if USDT is 0
+    const hasUsdc = usdcWallet > 0 || usdcAvail > 0 || (usdcAsset && usdtWallet <= 0);
+    const activeAsset = (hasUsdc || usdtWallet <= 0) ? 'USDC' : 'USDT';
+
+    const walletBalance = activeAsset === 'USDC' ? usdcWallet : usdtWallet;
+    const marginBalance = activeAsset === 'USDC' ? usdcMargin : usdtMargin;
+    const unrealizedProfit = activeAsset === 'USDC' ? usdcUnrealized : usdtUnrealized;
+    const availableBalance = activeAsset === 'USDC' ? usdcAvail : usdtAvail;
 
     posLiveState.walletBalance = walletBalance;
     posLiveState.marginBalance = marginBalance;
     posLiveState.unrealizedProfit = unrealizedProfit;
     posLiveState.availableBalance = availableBalance;
+    posLiveState.activeAsset = activeAsset;
 
     state.binanceApi.availBalance = availableBalance;
     state.binanceApi.totalBalance = walletBalance;
@@ -412,11 +436,17 @@ async function loadPositionsAndBalance(options = {}) {
     if (dom.balTotalWallet) {
       dom.balTotalWallet.textContent = `$${walletBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
+    if (dom.balUnit) {
+      dom.balUnit.textContent = activeAsset;
+    }
     if (dom.balMarginTotal) {
       dom.balMarginTotal.textContent = `$${marginBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
     if (dom.balAvailable) {
       dom.balAvailable.textContent = `$${availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    if (dom.confirmAvailBal) {
+      dom.confirmAvailBal.textContent = `Avail: $${availableBalance.toFixed(2)} ${activeAsset}`;
     }
 
     if (dom.balUnrealizedPnl) {
@@ -425,7 +455,6 @@ async function loadPositionsAndBalance(options = {}) {
       dom.balUnrealizedPnl.className = `bal-val bal-pnl-val ${isBull ? 'bull' : 'bear'}`;
       dom.balUnrealizedPnl.textContent = `${isBull ? '+' : ''}$${unrealizedProfit.toFixed(2)} (${isBull ? '+' : ''}${pnlPct.toFixed(2)}%)`;
     }
-
     // Merge Active Positions
     const sourceList = (Array.isArray(riskData) && riskData.length > 0) ? riskData : (accountData.positions || []);
     const activePositions = sourceList.filter(p => Math.abs(parseFloat(p.positionAmt || 0)) > 0);

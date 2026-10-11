@@ -353,6 +353,7 @@ var dom = {
   posEnvLabel: document.getElementById('pos-env-label'),
   btnRefreshPositions: document.getElementById('btn-refresh-positions'),
   balTotalWallet: document.getElementById('bal-total-wallet'),
+  balUnit: document.getElementById('bal-unit'),
   balUnrealizedPnl: document.getElementById('bal-unrealized-pnl'),
   balMarginTotal: document.getElementById('bal-margin-total'),
   balAvailable: document.getElementById('bal-available'),

@@ -215,14 +215,30 @@ async function fetchBinanceBalance() {
     if (Array.isArray(balances)) {
       const usdc = balances.find(b => b.asset === 'USDC');
       const usdt = balances.find(b => b.asset === 'USDT');
-      const targetBal = (usdc && (parseFloat(usdc.balance || 0) > 0 || parseFloat(usdc.availableBalance || 0) > 0)) ? usdc : (usdc || usdt);
+
+      const usdcBal = usdc ? parseFloat(usdc.balance || usdc.crossWalletBalance || 0) : 0;
+      const usdcAvail = usdc ? parseFloat(usdc.availableBalance || usdc.maxWithdrawAmount || 0) : 0;
+      const usdtBal = usdt ? parseFloat(usdt.balance || usdt.crossWalletBalance || 0) : 0;
+
+      const hasUsdc = usdcBal > 0 || usdcAvail > 0 || (usdc && usdtBal <= 0);
+      const targetBal = (hasUsdc || usdtBal <= 0) ? usdc : usdt;
+
       if (targetBal) {
-        const avail = parseFloat(targetBal.availableBalance || targetBal.balance || 0);
-        const total = parseFloat(targetBal.balance || targetBal.availableBalance || 0);
+        const avail = parseFloat(targetBal.availableBalance || targetBal.maxWithdrawAmount || targetBal.balance || 0);
+        const total = parseFloat(targetBal.balance || targetBal.crossWalletBalance || targetBal.availableBalance || 0);
         state.binanceApi.availBalance = avail;
         state.binanceApi.totalBalance = total;
         if (dom.confirmAvailBal) {
           dom.confirmAvailBal.textContent = `Avail: $${avail.toFixed(2)} ${targetBal.asset}`;
+        }
+        if (dom.balTotalWallet) {
+          dom.balTotalWallet.textContent = `$${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+        if (dom.balAvailable) {
+          dom.balAvailable.textContent = `$${avail.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+        if (dom.balUnit) {
+          dom.balUnit.textContent = targetBal.asset;
         }
         return { avail, total, asset: targetBal.asset };
       }
