@@ -917,8 +917,21 @@ async function executeBinancePosition() {
 
     closeAllSheets();
 
-    // Refresh balance and positions in background
+    // Save live position plan for instant on-chart TP & SL price lines rendering
+    if (typeof window.saveOpenedPositionPlan === 'function') {
+      window.saveOpenedPositionPlan(symbol, {
+        entryPrice: entryPrice,
+        tpPrice: positionState.tpPrice,
+        slPrice: positionState.slPrice,
+        isLong: isLong,
+      });
+    }
+
+    // Refresh balance, orders, and positions in background
     fetchBinanceBalance().catch(() => {});
+    if (typeof window.fetchOpenedPositionOrders === 'function') {
+      window.fetchOpenedPositionOrders(symbol);
+    }
     if (typeof window.loadPositionsAndBalance === 'function') {
       window.loadPositionsAndBalance({ force: true });
     }

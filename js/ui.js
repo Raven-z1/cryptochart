@@ -645,6 +645,16 @@ function setSymbol(sym) {
     addToWatchlist(sym);
   }
 
+  if (typeof window.clearOpenedPositionPriceLines === 'function') {
+    window.clearOpenedPositionPriceLines();
+  }
+  if (typeof window.updateOpenedPositionPriceLines === 'function') {
+    window.updateOpenedPositionPriceLines();
+  }
+  if (typeof window.fetchOpenedPositionOrders === 'function') {
+    window.fetchOpenedPositionOrders(state.symbol);
+  }
+
   closeAllSheets();
   fetchKlines(state.symbol, state.interval);
   connectWebSocket(state.symbol, state.interval);

@@ -120,6 +120,59 @@
   color: var(--color-bear);
   border: 1px solid rgba(246, 70, 93, 0.3);
 }
+/* Live Opened Position HUD */
+.pos-hud-live-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease;
+}
+.pos-hud-live-open:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.pos-hud-live-open.hidden {
+  display: none !important;
+}
+.pos-live-pill {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-family: var(--font-ui);
+}
+.pos-live-pill.long {
+  background: var(--color-bull-bg);
+  color: var(--color-bull);
+  border: 1px solid rgba(14, 203, 129, 0.4);
+}
+.pos-live-pill.short {
+  background: var(--color-bear-bg);
+  color: var(--color-bear);
+  border: 1px solid rgba(246, 70, 93, 0.4);
+}
+.pos-live-pnl {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+.pos-live-pnl.bull {
+  color: var(--color-bull);
+}
+.pos-live-pnl.bear {
+  color: var(--color-bear);
+}
+.pos-live-tpsl {
+  font-size: 9.5px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
 
 .pos-hud-stat {
   display: inline-flex;

@@ -227,6 +227,9 @@ function handleLiveMarkPriceUpdate(sym, newMarkPrice) {
 
   // Recalculate total unrealized profit and update balance header
   updateAggregatedBalances();
+  if (sym === state.symbol) {
+    updateOpenedPositionPriceLines();
+  }
 }
 
 /**
@@ -507,6 +510,9 @@ async function loadPositionsAndBalance(options = {}) {
       }
     }
 
+    // Synchronize opened position on-chart price lines (ENTRY, TP, SL, LIQ)
+    updateOpenedPositionPriceLines();
+
     posLiveState.lastSyncTime = Date.now();
     posLiveState.consecutiveErrors = 0;
 
@@ -548,6 +554,299 @@ function openPositionsSheet() {
   syncPositionsWebSocket(posLiveState.activePositions);
   scheduleNextPoll();
 }
+
+// =========================================================================
+// OPENED POSITION ON-CHART PRICE LINES (ENTRY, TP, SL, LIQ)
+// =========================================================================
+
+const openedPositionOrders = {}; // symbol -> { tpPrice, slPrice, entryPrice, isLong }
+const lastOrderFetchTimes = {}; // symbol -> timestamp
+
+const openedPositionLines = {
+  entry: null,
+  tp: null,
+  sl: null,
+  liq: null,
+  series: null,
+  symbol: null,
+};
+
+function clearOpenedPositionPriceLines() {
+  if (openedPositionLines.series) {
+    const s = openedPositionLines.series;
+    try {
+      if (openedPositionLines.entry) s.removePriceLine(openedPositionLines.entry);
+      if (openedPositionLines.tp) s.removePriceLine(openedPositionLines.tp);
+      if (openedPositionLines.sl) s.removePriceLine(openedPositionLines.sl);
+      if (openedPositionLines.liq) s.removePriceLine(openedPositionLines.liq);
+    } catch (_) {}
+  }
+  openedPositionLines.entry = null;
+  openedPositionLines.tp = null;
+  openedPositionLines.sl = null;
+  openedPositionLines.liq = null;
+  openedPositionLines.series = null;
+  openedPositionLines.symbol = null;
+
+  if (dom.posHudLiveOpen) {
+    dom.posHudLiveOpen.classList.add('hidden');
+  }
+}
+
+function saveOpenedPositionPlan(symbol, plan) {
+  if (!symbol || !plan) return;
+  symbol = symbol.trim().toUpperCase();
+  openedPositionOrders[symbol] = {
+    entryPrice: parseFloat(plan.entryPrice || 0),
+    tpPrice: parseFloat(plan.tpPrice || 0),
+    slPrice: parseFloat(plan.slPrice || 0),
+    isLong: !!plan.isLong,
+    timestamp: Date.now(),
+  };
+  try {
+    localStorage.setItem('cc_open_pos_' + symbol, JSON.stringify(openedPositionOrders[symbol]));
+  } catch (_) {}
+  updateOpenedPositionPriceLines();
+}
+
+async function fetchOpenedPositionOrders(symbol) {
+  if (!symbol || typeof symbol !== 'string') return;
+  symbol = symbol.trim().toUpperCase();
+  const key = (state.binanceApi.key || '').trim();
+  const secret = (state.binanceApi.secret || '').trim();
+  if (!key || !secret) return;
+
+  const now = Date.now();
+  if (lastOrderFetchTimes[symbol] && (now - lastOrderFetchTimes[symbol] < 4000)) {
+    return;
+  }
+  lastOrderFetchTimes[symbol] = now;
+
+  try {
+    const [algoOrders, regOrders] = await Promise.all([
+      binanceSignedRequest('/fapi/v1/openAlgoOrders', 'GET', { symbol }).catch(() => []),
+      binanceSignedRequest('/fapi/v1/openOrders', 'GET', { symbol }).catch(() => [])
+    ]);
+
+    const all = [...(Array.isArray(algoOrders) ? algoOrders : []), ...(Array.isArray(regOrders) ? regOrders : [])];
+    const pos = (posLiveState.activePositions || []).find(p => p.symbol === symbol && Math.abs(parseFloat(p.positionAmt || 0)) > 0);
+    const isLong = pos ? (parseFloat(pos.positionAmt) > 0) : (openedPositionOrders[symbol]?.isLong ?? true);
+    const entryPrice = pos ? parseFloat(pos.entryPrice || 0) : (openedPositionOrders[symbol]?.entryPrice || 0);
+
+    let tp = 0;
+    let sl = 0;
+
+    for (const o of all) {
+      const oType = (o.orderType || o.type || '').toUpperCase();
+      const oPrice = parseFloat(o.triggerPrice || o.stopPrice || o.price || 0);
+      if (!oPrice || oPrice <= 0) continue;
+
+      const isExitSide = isLong ? (o.side === 'SELL') : (o.side === 'BUY');
+      if (!isExitSide) continue;
+
+      if (oType.includes('TAKE_PROFIT') || (entryPrice > 0 && (isLong ? oPrice > entryPrice : oPrice < entryPrice) && (o.reduceOnly === true || o.closePosition === true || oType.includes('LIMIT')))) {
+        if (!tp || (isLong ? oPrice < tp : oPrice > tp)) {
+          tp = oPrice;
+        }
+      } else if (oType.includes('STOP') || (entryPrice > 0 && (isLong ? oPrice < entryPrice : oPrice > entryPrice) && (o.reduceOnly === true || o.closePosition === true))) {
+        if (!sl || (isLong ? oPrice > sl : oPrice < sl)) {
+          sl = oPrice;
+        }
+      }
+    }
+
+    if (!openedPositionOrders[symbol]) {
+      openedPositionOrders[symbol] = {};
+    }
+    if (tp > 0) openedPositionOrders[symbol].tpPrice = tp;
+    if (sl > 0) openedPositionOrders[symbol].slPrice = sl;
+    if (entryPrice > 0) openedPositionOrders[symbol].entryPrice = entryPrice;
+    openedPositionOrders[symbol].isLong = isLong;
+
+    try {
+      localStorage.setItem('cc_open_pos_' + symbol, JSON.stringify(openedPositionOrders[symbol]));
+    } catch (_) {}
+
+    updateOpenedPositionPriceLines();
+  } catch (e) {
+    console.warn('fetchOpenedPositionOrders error:', e.message);
+  }
+}
+
+function updateOpenedPositionPriceLines() {
+  const currentSymbol = state.symbol;
+  if (!currentSymbol) {
+    clearOpenedPositionPriceLines();
+    return;
+  }
+
+  // Check if position is active on current symbol
+  const openPos = (posLiveState.activePositions || []).find(p => p.symbol === currentSymbol && Math.abs(parseFloat(p.positionAmt || 0)) > 0);
+  if (!openPos) {
+    clearOpenedPositionPriceLines();
+    return;
+  }
+
+  const amt = parseFloat(openPos.positionAmt || 0);
+  const isLong = amt > 0;
+  const entryPrice = parseFloat(openPos.entryPrice || 0);
+  const markPrice = parseFloat(openPos.markPrice || state.currentPrice || entryPrice);
+  const liqPrice = parseFloat(openPos.liquidationPrice || 0);
+  const pnl = parseFloat(openPos.unRealizedProfit || openPos.unrealizedProfit || ((markPrice - entryPrice) * amt));
+
+  // Retrieve TP and SL from in-memory cache or localStorage
+  if (!openedPositionOrders[currentSymbol]) {
+    try {
+      const saved = JSON.parse(localStorage.getItem('cc_open_pos_' + currentSymbol));
+      if (saved && typeof saved === 'object') {
+        openedPositionOrders[currentSymbol] = saved;
+      } else {
+        openedPositionOrders[currentSymbol] = {};
+      }
+    } catch (_) {
+      openedPositionOrders[currentSymbol] = {};
+    }
+  }
+
+  const cached = openedPositionOrders[currentSymbol] || {};
+  let tpPrice = cached.tpPrice ? parseFloat(cached.tpPrice) : 0;
+  let slPrice = cached.slPrice ? parseFloat(cached.slPrice) : 0;
+
+  // Background refresh of orders from exchange
+  fetchOpenedPositionOrders(currentSymbol);
+
+  // Target chart series
+  const targetSeries = (state.chartStyle === 'line' ? window.lineSeries : window.candleSeries);
+  if (!targetSeries) return;
+
+  // Clean lines if series or symbol switched
+  if (openedPositionLines.series && (openedPositionLines.series !== targetSeries || openedPositionLines.symbol !== currentSymbol)) {
+    clearOpenedPositionPriceLines();
+  }
+
+  // 1. ENTRY PRICE LINE
+  if (entryPrice > 0) {
+    const posTag = isLong ? 'OPEN LONG' : 'OPEN SHORT';
+    const pnlSign = pnl >= 0 ? '+' : '';
+    const entryTitle = `${posTag} @ $${formatPrice(entryPrice, currentSymbol)} (PnL: ${pnlSign}$${pnl.toFixed(2)})`;
+    const entryOpts = {
+      price: entryPrice,
+      color: isLong ? 'rgba(41, 98, 255, 0.9)' : 'rgba(255, 109, 0, 0.9)',
+      lineWidth: 2,
+      lineStyle: LightweightCharts.LineStyle.Solid,
+      axisLabelVisible: true,
+      title: entryTitle,
+    };
+
+    try {
+      if (!openedPositionLines.entry) {
+        openedPositionLines.entry = targetSeries.createPriceLine(entryOpts);
+      } else {
+        openedPositionLines.entry.applyOptions(entryOpts);
+      }
+    } catch (_) {}
+  } else if (openedPositionLines.entry) {
+    try { targetSeries.removePriceLine(openedPositionLines.entry); } catch (_) {}
+    openedPositionLines.entry = null;
+  }
+
+  // 2. TAKE PROFIT PRICE LINE
+  if (tpPrice > 0) {
+    const tpPct = entryPrice > 0 ? (isLong ? ((tpPrice - entryPrice) / entryPrice * 100) : ((entryPrice - tpPrice) / entryPrice * 100)) : 0;
+    const tpTitle = `OPEN TP: $${formatPrice(tpPrice, currentSymbol)} (+${tpPct.toFixed(2)}%)`;
+    const tpOpts = {
+      price: tpPrice,
+      color: '#0ecb81',
+      lineWidth: 2,
+      lineStyle: LightweightCharts.LineStyle.Dashed,
+      axisLabelVisible: true,
+      title: tpTitle,
+    };
+
+    try {
+      if (!openedPositionLines.tp) {
+        openedPositionLines.tp = targetSeries.createPriceLine(tpOpts);
+      } else {
+        openedPositionLines.tp.applyOptions(tpOpts);
+      }
+    } catch (_) {}
+  } else if (openedPositionLines.tp) {
+    try { targetSeries.removePriceLine(openedPositionLines.tp); } catch (_) {}
+    openedPositionLines.tp = null;
+  }
+
+  // 3. STOP LOSS PRICE LINE
+  if (slPrice > 0) {
+    const slPct = entryPrice > 0 ? (isLong ? ((entryPrice - slPrice) / entryPrice * 100) : ((slPrice - entryPrice) / entryPrice * 100)) : 0;
+    const slTitle = `OPEN SL: $${formatPrice(slPrice, currentSymbol)} (-${slPct.toFixed(2)}%)`;
+    const slOpts = {
+      price: slPrice,
+      color: '#f6465d',
+      lineWidth: 2,
+      lineStyle: LightweightCharts.LineStyle.Dashed,
+      axisLabelVisible: true,
+      title: slTitle,
+    };
+
+    try {
+      if (!openedPositionLines.sl) {
+        openedPositionLines.sl = targetSeries.createPriceLine(slOpts);
+      } else {
+        openedPositionLines.sl.applyOptions(slOpts);
+      }
+    } catch (_) {}
+  } else if (openedPositionLines.sl) {
+    try { targetSeries.removePriceLine(openedPositionLines.sl); } catch (_) {}
+    openedPositionLines.sl = null;
+  }
+
+  // 4. LIQUIDATION PRICE LINE
+  if (liqPrice > 0) {
+    const liqTitle = `LIQ: $${formatPrice(liqPrice, currentSymbol)}`;
+    const liqOpts = {
+      price: liqPrice,
+      color: '#ff334b',
+      lineWidth: 1,
+      lineStyle: LightweightCharts.LineStyle.Dotted,
+      axisLabelVisible: true,
+      title: liqTitle,
+    };
+
+    try {
+      if (!openedPositionLines.liq) {
+        openedPositionLines.liq = targetSeries.createPriceLine(liqOpts);
+      } else {
+        openedPositionLines.liq.applyOptions(liqOpts);
+      }
+    } catch (_) {}
+  } else if (openedPositionLines.liq) {
+    try { targetSeries.removePriceLine(openedPositionLines.liq); } catch (_) {}
+    openedPositionLines.liq = null;
+  }
+
+  openedPositionLines.series = targetSeries;
+  openedPositionLines.symbol = currentSymbol;
+
+  // 5. UPDATE LIVE ON-CHART HUD
+  if (dom.posHudLiveOpen) {
+    dom.posHudLiveOpen.classList.remove('hidden');
+    if (dom.posLivePill) {
+      dom.posLivePill.className = `pos-live-pill ${isLong ? 'long' : 'short'}`;
+      dom.posLivePill.textContent = isLong ? 'OPEN LONG' : 'OPEN SHORT';
+    }
+    if (dom.posLivePnl) {
+      const isBull = pnl >= 0;
+      dom.posLivePnl.className = `pos-live-pnl ${isBull ? 'bull' : 'bear'}`;
+      dom.posLivePnl.textContent = `${isBull ? '+' : ''}$${pnl.toFixed(2)}`;
+    }
+    if (dom.posLiveTpsl) {
+      const tpStr = tpPrice > 0 ? `$${formatPrice(tpPrice, currentSymbol)}` : '--';
+      const slStr = slPrice > 0 ? `$${formatPrice(slPrice, currentSymbol)}` : '--';
+      dom.posLiveTpsl.textContent = `TP: ${tpStr} | SL: ${slStr}`;
+    }
+  }
+}
+
 
 /**
  * Positions Manager Lifecycle Initializer
@@ -616,6 +915,9 @@ if (dom.posListBackdrop) {
   });
 }
 
+if (dom.posHudLiveOpen) {
+  dom.posHudLiveOpen.addEventListener('click', openPositionsSheet);
+}
 // Position Card Actions (Chart Switch & Market Close)
 if (dom.openPositionsContainer) {
   dom.openPositionsContainer.addEventListener('click', async (e) => {
@@ -670,3 +972,7 @@ window.openPositionsSheet = openPositionsSheet;
 window.initPositionsManager = initPositionsManager;
 window.syncPositionsWebSocket = syncPositionsWebSocket;
 window.handleLiveMarkPriceUpdate = handleLiveMarkPriceUpdate;
+window.saveOpenedPositionPlan = saveOpenedPositionPlan;
+window.fetchOpenedPositionOrders = fetchOpenedPositionOrders;
+window.updateOpenedPositionPriceLines = updateOpenedPositionPriceLines;
+window.clearOpenedPositionPriceLines = clearOpenedPositionPriceLines;

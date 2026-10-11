@@ -240,6 +240,9 @@ function renderChartData() {
   if (positionState.active) {
     updatePositionUI();
   }
+  if (typeof window.updateOpenedPositionPriceLines === 'function') {
+    window.updateOpenedPositionPriceLines();
+  }
 }
 
 

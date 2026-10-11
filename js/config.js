@@ -235,6 +235,10 @@ var dom = {
   posHudRr: document.getElementById('pos-hud-rr'),
   btnPosEdit: document.getElementById('btn-pos-edit'),
   btnPosClose: document.getElementById('btn-pos-close'),
+  posHudLiveOpen: document.getElementById('pos-hud-live-open'),
+  posLivePill: document.getElementById('pos-live-pill'),
+  posLivePnl: document.getElementById('pos-live-pnl'),
+  posLiveTpsl: document.getElementById('pos-live-tpsl'),
   // Position SVG Overlay & Shapes
   tvPositionOverlay: document.getElementById('tv-position-overlay'),
   paneClipRect: document.getElementById('pane-clip-rect'),
