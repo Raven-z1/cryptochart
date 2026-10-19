@@ -673,8 +673,9 @@ function openOrderConfirmationSheet() {
 // Order Execution Pipeline
 let isExecutingOrder = false;
 
-// Helper to place Binance Futures Conditional TP/SL Limit Orders via dedicated Algo Service
+// Helper to place Binance Futures Conditional TP/SL Orders via dedicated Algo Service or Native Order API
 async function placeAlgoConditionalOrder({ symbol, side, type, triggerPrice, price, orderQty, positionSide }) {
+  const isMarket = type.endsWith('_MARKET');
   const limitPrice = price || triggerPrice;
 
   // Strategy 1: Modern Binance USDⓈ-M algoOrder endpoint with closePosition: 'true' (No quantity required)
@@ -685,12 +686,14 @@ async function placeAlgoConditionalOrder({ symbol, side, type, triggerPrice, pri
       side,
       type,
       triggerPrice,
-      price: limitPrice,
       closePosition: 'true',
       workingType: 'MARK_PRICE',
-      timeInForce: 'GTC',
     };
-    if (positionSide) params.positionSide = positionSide;
+    if (!isMarket) {
+      params.price = limitPrice;
+      params.timeInForce = 'GTC';
+    }
+    if (positionSide && positionSide !== 'BOTH') params.positionSide = positionSide;
     return await binanceSignedRequest('/fapi/v1/algoOrder', 'POST', params);
   } catch (err1) {
     console.warn(`algoOrder closePosition failed for ${type}:`, err1.message);
@@ -710,31 +713,35 @@ async function placeAlgoConditionalOrder({ symbol, side, type, triggerPrice, pri
           side,
           type,
           triggerPrice,
-          price: limitPrice,
           quantity: orderQty,
           reduceOnly: 'true',
           workingType: 'MARK_PRICE',
-          timeInForce: 'GTC',
         };
-        if (positionSide) params2.positionSide = positionSide;
+        if (!isMarket) {
+          params2.price = limitPrice;
+          params2.timeInForce = 'GTC';
+        }
+        if (positionSide && positionSide !== 'BOTH') params2.positionSide = positionSide;
         return await binanceSignedRequest('/fapi/v1/algoOrder', 'POST', params2);
       } catch (err2) {
         console.warn(`algoOrder reduceOnly failed for ${type}:`, err2.message);
       }
     }
 
-    // Strategy 3: Legacy /fapi/v1/order with stopPrice, price, and closePosition: 'true' (for older testnet/mock environments)
+    // Strategy 3: Legacy /fapi/v1/order with stopPrice and closePosition: 'true' (for older testnet/mock environments)
     try {
       const legacyParams = {
         symbol,
         side,
         type,
         stopPrice: triggerPrice,
-        price: limitPrice,
         closePosition: 'true',
         workingType: 'MARK_PRICE',
-        timeInForce: 'GTC',
       };
+      if (!isMarket) {
+        legacyParams.price = limitPrice;
+        legacyParams.timeInForce = 'GTC';
+      }
       if (positionSide && positionSide !== 'BOTH') legacyParams.positionSide = positionSide;
       return await binanceSignedRequest('/fapi/v1/order', 'POST', legacyParams);
     } catch (legacyErr) {
@@ -745,12 +752,14 @@ async function placeAlgoConditionalOrder({ symbol, side, type, triggerPrice, pri
           side,
           type,
           stopPrice: triggerPrice,
-          price: limitPrice,
           quantity: orderQty,
           reduceOnly: 'true',
           workingType: 'MARK_PRICE',
-          timeInForce: 'GTC',
         };
+        if (!isMarket) {
+          legacyParams2.price = limitPrice;
+          legacyParams2.timeInForce = 'GTC';
+        }
         if (positionSide && positionSide !== 'BOTH') legacyParams2.positionSide = positionSide;
         return await binanceSignedRequest('/fapi/v1/order', 'POST', legacyParams2);
       } catch (finalErr) {
@@ -867,42 +876,40 @@ async function executeBinancePosition() {
     const primaryOrder = await binanceSignedRequest('/fapi/v1/order', 'POST', primaryParams);
     console.log('Primary limit order placed successfully:', primaryOrder);
 
-    // Step 6: Native Exchange Bracket TP & SL Orders via Limit Algo Orders
+    // Step 6: Native Exchange Bracket TP & SL Orders via Market Algo Orders
     let bracketWarning = '';
 
-    // Take Profit Limit Order
+    // Take Profit Market Order
     if (positionState.tpPrice > 0) {
       try {
         await placeAlgoConditionalOrder({
           symbol,
           side: exitSide,
-          type: 'TAKE_PROFIT',
+          type: 'TAKE_PROFIT_MARKET',
           triggerPrice: tpPriceStr,
-          price: tpPriceStr,
           orderQty: orderQtyStr,
           positionSide,
         });
       } catch (tpErr) {
-        console.error('Take Profit limit algo order failed:', tpErr);
-        bracketWarning += `TP Limit failed: ${tpErr.message}. `;
+        console.error('Take Profit market algo order failed:', tpErr);
+        bracketWarning += `TP Market failed: ${tpErr.message}. `;
       }
     }
 
-    // Stop Loss Limit Order
+    // Stop Loss Market Order
     if (positionState.slPrice > 0) {
       try {
         await placeAlgoConditionalOrder({
           symbol,
           side: exitSide,
-          type: 'STOP',
+          type: 'STOP_MARKET',
           triggerPrice: slPriceStr,
-          price: slPriceStr,
           orderQty: orderQtyStr,
           positionSide,
         });
       } catch (slErr) {
-        console.error('Stop Loss limit algo order failed:', slErr);
-        bracketWarning += `SL Limit failed: ${slErr.message}. `;
+        console.error('Stop Loss market algo order failed:', slErr);
+        bracketWarning += `SL Market failed: ${slErr.message}. `;
       }
     }
 
@@ -912,7 +919,7 @@ async function executeBinancePosition() {
     if (bracketWarning) {
       showToast(`Primary Limit Order Placed! ⚠️ ${bracketWarning}Please check in Binance app.`, 7000);
     } else {
-      showToast(`🚀 ${positionState.type.toUpperCase()} Limit Order & Limit TP/SL placed successfully!`, 4000);
+      showToast(`🚀 ${positionState.type.toUpperCase()} Limit Order & Market TP/SL placed successfully!`, 4000);
     }
 
     closeAllSheets();
