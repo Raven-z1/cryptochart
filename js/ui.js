@@ -210,7 +210,7 @@ function updateLivePrice(newPrice) {
   }
 }
 
-const VALID_INTERVALS = ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d', '3d', '1w', '1M'];
+const VALID_INTERVALS = CONFIG.intervals;
 
 let fetchAbortController = null;
 
@@ -678,6 +678,7 @@ function setTimeframe(intv) {
   }
   haptic(20);
   state.interval = intv;
+  try { localStorage.setItem('cc_interval', intv); } catch (_) {}
   state.currentCandleCloseTime = null; // Re-align countdown timer to new timeframe boundary
   updateTimeframeUI();
   closeAllSheets();

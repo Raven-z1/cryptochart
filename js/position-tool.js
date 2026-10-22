@@ -73,8 +73,8 @@ function drawPosition(type) {
   positionState.type = type;
   positionState.entryPrice = curPrice;
 
-  // Default 1:1 R:R setup (risk 1%)
-  const riskPct = 0.01;
+  // Default 1:1 R:R setup (risk 0.5%)
+  const riskPct = 0.005;
   if (type === 'long') {
     positionState.slPrice = curPrice * (1 - riskPct);
     positionState.tpPrice = curPrice * (1 + riskPct * DEFAULT_RR);
