@@ -82,6 +82,10 @@ var state = {
   rawCandles: [],
   symbolsMeta: {},
   allTickers: [],
+  // Last closed 1h candle percent move per symbol: { BTCUSDT: 1.23, ... }
+  h1Change: {},
+  h1Bucket: 0,
+  h1FetchedAt: 0,
   currentPrice: 0,
   currentCandleCloseTime: 0,
   ws: null,

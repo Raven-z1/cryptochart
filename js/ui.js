@@ -39,10 +39,112 @@ async function load24hTickers() {
       renderSheetCoins();
       renderQuickSwitcher();
       updateStatsRibbon();
+      loadHourlyChanges();
     }
   } catch (e) {
     console.error('24hr ticker error:', e);
   }
+}
+
+// --- 1h candle move ranking ---
+// For each symbol, read the last CLOSED 1h candle and compute its percent change
+// (close vs open). The symbol list is then sorted by absolute value, biggest first.
+let h1ChangesInFlight = false;
+let h1ResortTimer = null;
+
+// Throttled re-render so the open list re-ranks as 1h data arrives
+function scheduleHourlyResort() {
+  if (h1ResortTimer) return;
+  h1ResortTimer = setTimeout(() => {
+    h1ResortTimer = null;
+    if (dom.marketBackdrop && dom.marketBackdrop.classList.contains('open')) {
+      renderSheetCoins();
+    }
+  }, 1200);
+}
+
+function getServerNow() {
+  return Date.now() + (state.binanceApi.serverOffset || 0);
+}
+
+function sortByHourlyMove(list) {
+  const map = state.h1Change || {};
+  const moveOf = (item) => {
+    const sym = typeof item === 'string' ? item : (item && item.symbol);
+    const v = map[sym];
+    return Number.isFinite(v) ? Math.abs(v) : -1;
+  };
+  // Stable sort: symbols without data keep their previous order at the bottom
+  return [...list].sort((a, b) => moveOf(b) - moveOf(a));
+}
+
+async function fetchHourlyMove(symbol) {
+  try {
+    const url = `${CONFIG.restBase}/fapi/v1/klines?symbol=${encodeURIComponent(symbol)}&interval=1h&limit=3`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const raw = await res.json();
+    if (!Array.isArray(raw) || raw.length === 0) return null;
+
+    const now = getServerNow();
+    const candles = raw
+      .map(k => ({ open: parseFloat(k[1]), close: parseFloat(k[4]), closeTime: k[6] }))
+      .filter(c => c.open > 0 && c.close > 0);
+    // Skip the currently running candle
+    const closed = candles.filter(c => c.closeTime <= now);
+    const last = closed.length > 0 ? closed[closed.length - 1] : candles[candles.length - 1];
+    if (!last) return null;
+    return ((last.close - last.open) / last.open) * 100;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function loadHourlyChanges() {
+  const symbols = (state.allTickers || []).map(t => t.symbol);
+  if (symbols.length === 0) return;
+
+  // The last closed 1h candle only changes at the hour boundary, so one
+  // fetch per hour (plus a small throttle) is enough.
+  const bucket = Math.floor(getServerNow() / 3600000);
+  const fresh = state.h1Bucket === bucket && (Date.now() - state.h1FetchedAt) < 60000;
+  if (fresh || h1ChangesInFlight) return;
+
+  h1ChangesInFlight = true;
+  const results = {};
+  // Publish the map right away so rows can re-rank while data streams in
+  state.h1Change = results;
+
+  // Fetch in batches so a big symbol list does not hammer the REST endpoint
+  const fetchBatch = async (symList, laneCount) => {
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < symList.length) {
+        const sym = symList[cursor++];
+        const pct = await fetchHourlyMove(sym);
+        if (pct !== null && Number.isFinite(pct)) {
+          results[sym] = pct;
+          scheduleHourlyResort();
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(laneCount, symList.length) }, worker));
+  };
+
+  try {
+    await fetchBatch(symbols, 12);
+    const missing = symbols.filter(s => results[s] === undefined);
+    if (missing.length > 0) await fetchBatch(missing, 4);
+    state.h1Change = results;
+    state.h1Bucket = bucket;
+    state.h1FetchedAt = Date.now();
+  } catch (e) {
+    console.warn('Hourly move fetch error:', e);
+  } finally {
+    h1ChangesInFlight = false;
+  }
+
+  renderSheetCoins();
 }
 
 // 24h Price Lines on Chart
@@ -466,11 +568,11 @@ function getActiveCategorySymbols() {
   const validPairs = state.allTickers.filter(t => t.symbol && t.symbol.endsWith('USDT') && /^[A-Z0-9]+$/.test(t.symbol));
 
   if (state.activeCategory === 'watchlist') {
-    return (state.watchlist && state.watchlist.length > 0) ? state.watchlist : CONFIG.defaultWatchlist;
+    return sortByHourlyMove((state.watchlist && state.watchlist.length > 0) ? state.watchlist : CONFIG.defaultWatchlist);
   }
 
-  // Default: all USDT pairs
-  return validPairs.map(t => t.symbol);
+  // Default: all USDT pairs, ranked by largest 1h candle move
+  return sortByHourlyMove(validPairs.map(t => t.symbol));
 }
 
 function getCategoryDisplayName(cat) {
@@ -698,10 +800,10 @@ function renderSheetCoins() {
   if (sheetFilter === 'watchlist') {
     const wl = state.watchlist || [];
     list = list.filter(t => wl.includes(t.symbol));
-    list.sort((a, b) => wl.indexOf(a.symbol) - wl.indexOf(b.symbol));
-  } else {
-    list.sort((a, b) => a.symbol.localeCompare(b.symbol));
   }
+
+  // Sort by absolute % move of the last closed 1h candle, largest first
+  list = sortByHourlyMove(list);
 
   if (list.length === 0) {
     dom.sheetCoinList.innerHTML = `<div style="padding:32px 16px;text-align:center;color:var(--text-muted);font-size:13px;">No matching USDT pairs found</div>`;
@@ -777,6 +879,7 @@ dom.openMarketBtn.addEventListener('click', () => {
   dom.coinSearchInput.value = '';
   updateCategoryBadgeUI();
   renderSheetCoins();
+  loadHourlyChanges();
   openSheet(dom.marketBackdrop);
 });
 dom.dockMarketBtn.addEventListener('click', () => dom.openMarketBtn.click());
@@ -857,6 +960,8 @@ dom.sheetCoinList.addEventListener('click', e => {
 // Expose UI methods globally
 window.loadExchangeInfo = loadExchangeInfo;
 window.load24hTickers = load24hTickers;
+window.loadHourlyChanges = loadHourlyChanges;
+window.sortByHourlyMove = sortByHourlyMove;
 window.updateHighLowDistances = updateHighLowDistances;
 window.cycleDistMode = cycleDistMode;
 window.updateStatsRibbon = updateStatsRibbon;
