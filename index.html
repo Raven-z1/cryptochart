@@ -46,8 +46,8 @@
         <!-- Symbol Trigger (Tap to open Market / Coins Bottom Sheet) -->
         <div class="symbol-nav-group">
           <div class="symbol-pill-trigger" id="open-market-btn" title="Select Coin (or type any letter)">
-            <span class="sym-name" id="head-symbol">BTCUSDC</span>
-            <span class="sym-tag cat-tag" id="head-cat-tag">USDC</span>
+            <span class="sym-name" id="head-symbol">BTCUSDT</span>
+            <span class="sym-tag cat-tag" id="head-cat-tag">USDT</span>
             <span class="sym-arrow">▼</span>
           </div>
         </div>
@@ -121,7 +121,7 @@
           <span class="stat-dist dist-bull" id="stat-low-dist">--</span>
         </div>
         <div class="stat-col">
-          <span class="lbl">24h Vol (USDC)</span>
+          <span class="lbl">24h Vol (USDT)</span>
           <span class="val" id="stat-turnover">--</span>
         </div>
         <div class="stat-col clickable" id="col-24h-range" title="Position in 24h Range">
@@ -187,7 +187,7 @@
       </div>
 
       <!-- Watermark -->
-      <div class="chart-watermark" id="chart-watermark">BTCUSDC 5M</div>
+      <div class="chart-watermark" id="chart-watermark">BTCUSDT 5M</div>
 
       <!-- Canvas for TradingView Lightweight Charts -->
       <div id="chart-container"></div>
@@ -332,7 +332,7 @@
         </form>
       </div>
       <div class="sheet-filter-tabs">
-        <button class="sheet-tab-btn active" data-filter="usdc">🪙 USDC Pairs</button>
+        <button class="sheet-tab-btn active" data-filter="usdt">🪙 USDT Pairs</button>
         <button class="sheet-tab-btn" data-filter="watchlist">⭐ Watchlist</button>
       </div>
       <div class="sheet-coin-list" id="sheet-coin-list">
@@ -436,28 +436,20 @@
           <div class="confirm-summary-header">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span class="confirm-type-tag" id="confirm-type-tag">LONG</span>
-              <span class="confirm-sym" id="confirm-sym">BTCUSDC</span>
+              <span class="confirm-sym" id="confirm-sym">BTCUSDT</span>
             </div>
             <span class="confirm-curr-price" id="confirm-curr-price">Market: $--.--</span>
           </div>
 
-          <!-- Order Type Selector (Limit Orders Enforced) -->
+          <!-- Order Type (Market Orders Enforced) -->
           <div class="confirm-field-group">
             <div class="confirm-field-header">
               <label class="confirm-field-lbl">Order Type</label>
-              <span style="font-size: 11px; color: var(--binance-gold); font-weight: 600;">Limit Order (GTC)</span>
+              <span style="font-size: 11px; color: var(--binance-gold); font-weight: 600;">Market Order</span>
             </div>
             <div class="confirm-toggle-group">
-              <button type="button" class="confirm-type-btn active" id="btn-ordertype-limit">LIMIT</button>
+              <button type="button" class="confirm-type-btn active" id="btn-ordertype-market">MARKET</button>
             </div>
-          </div>
-
-          <!-- Limit Price -->
-          <div class="confirm-field-group" id="confirm-limit-price-group">
-            <div class="confirm-field-header">
-              <label class="confirm-field-lbl">Limit Entry Price ($)</label>
-            </div>
-            <input type="number" step="any" class="pos-num-input" id="confirm-limit-price" placeholder="Limit Price">
           </div>
 
           <!-- Risk Sizing Control (Stop Loss Risk % of Balance) -->
@@ -478,7 +470,7 @@
           <!-- Position Size / Margin Input -->
           <div class="confirm-field-group">
             <div class="confirm-field-header">
-              <label class="confirm-field-lbl">Position Size (USDC)</label>
+              <label class="confirm-field-lbl">Position Size (USDT)</label>
               <span class="confirm-avail-bal" id="confirm-avail-bal">Avail: $--.--</span>
             </div>
             <div class="confirm-size-input-wrap">
@@ -487,7 +479,7 @@
               <span class="size-equiv" id="confirm-size-equiv">≈ 0.000 QTY</span>
             </div>
             <div class="confirm-size-subline">
-              <span class="confirm-margin-cost-lbl" id="confirm-margin-cost-lbl">Margin Cost: $0.00 USDC</span>
+              <span class="confirm-margin-cost-lbl" id="confirm-margin-cost-lbl">Margin Cost: $0.00 USDT</span>
               <span class="confirm-sl-dist-lbl" id="confirm-sl-dist-lbl">SL Dist: 0.0%</span>
             </div>
             <!-- Quick Chips for Manual Size -->
@@ -598,7 +590,7 @@
               <span class="bal-lbl">Total Wallet Balance</span>
               <div class="bal-val-wrap">
                 <span class="bal-val" id="bal-total-wallet">$0.00</span>
-                <span class="bal-unit" id="bal-unit">USDC</span>
+                <span class="bal-unit" id="bal-unit">USDT</span>
               </div>
             </div>
             <div class="bal-col right">
@@ -998,7 +990,7 @@
             <span class="ai-data-context-label">📊 Chart Data Ingested to AI:</span>
             <div class="ai-data-badges">
               <span class="ai-data-badge tf-badge" id="ai-context-timeframe">5m Timeframe</span>
-              <span class="ai-data-badge sym-badge" id="ai-context-symbol">BTCUSDC</span>
+              <span class="ai-data-badge sym-badge" id="ai-context-symbol">BTCUSDT</span>
               <span class="ai-data-badge candles-badge" id="ai-context-candles">40 Raw OHLCV Candles</span>
             </div>
           </div>
@@ -1075,7 +1067,7 @@
         <!-- Loading State Card -->
         <div class="ai-loading-card hidden" id="ai-loading-card">
           <div class="ai-spinner"></div>
-          <div class="ai-loading-text" id="ai-loading-text">Analyzing BTCUSDC (5m)...</div>
+          <div class="ai-loading-text" id="ai-loading-text">Analyzing BTCUSDT (5m)...</div>
           <div class="ai-loading-subtext" id="ai-loading-subtext">Connecting to Hugging Face gateway...</div>
           <button type="button" class="ai-btn-cancel" id="btn-ai-cancel">✕ Cancel Analysis</button>
         </div>

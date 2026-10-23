@@ -8,7 +8,7 @@ async function loadExchangeInfo() {
     const res = await fetch(`${CONFIG.restBase}/fapi/v1/exchangeInfo`);
     const data = await res.json();
     data.symbols.forEach(s => {
-      if (s.quoteAsset === 'USDC' && s.status === 'TRADING') {
+      if (s.quoteAsset === 'USDT' && s.status === 'TRADING') {
         const pf = s.filters.find(f => f.filterType === 'PRICE_FILTER');
         const lf = s.filters.find(f => f.filterType === 'LOT_SIZE');
         const nf = s.filters.find(f => f.filterType === 'MIN_NOTIONAL');
@@ -34,7 +34,7 @@ async function load24hTickers() {
     const list = await res.json();
     if (Array.isArray(list)) {
       state.allTickers = list
-        .filter(t => t.symbol && t.symbol.endsWith('USDC') && /^[A-Z0-9]+$/.test(t.symbol))
+        .filter(t => t.symbol && t.symbol.endsWith('USDT') && /^[A-Z0-9]+$/.test(t.symbol))
         .sort((a, b) => a.symbol.localeCompare(b.symbol));
       renderSheetCoins();
       renderQuickSwitcher();
@@ -226,7 +226,7 @@ function reanchorPositionToCandles() {
 }
 
 async function fetchKlines(symbol, interval) {
-  if (!symbol || typeof symbol !== 'string') symbol = state.symbol || 'BTCUSDC';
+  if (!symbol || typeof symbol !== 'string') symbol = state.symbol || 'BTCUSDT';
   if (!interval || typeof interval !== 'string' || !VALID_INTERVALS.includes(interval)) {
     interval = '5m';
     state.interval = '5m';
@@ -463,23 +463,23 @@ function getActiveCategorySymbols() {
     return (state.watchlist && state.watchlist.length > 0) ? state.watchlist : CONFIG.defaultWatchlist;
   }
 
-  const validPairs = state.allTickers.filter(t => t.symbol && t.symbol.endsWith('USDC') && /^[A-Z0-9]+$/.test(t.symbol));
+  const validPairs = state.allTickers.filter(t => t.symbol && t.symbol.endsWith('USDT') && /^[A-Z0-9]+$/.test(t.symbol));
 
   if (state.activeCategory === 'watchlist') {
     return (state.watchlist && state.watchlist.length > 0) ? state.watchlist : CONFIG.defaultWatchlist;
   }
 
-  // Default: all USDC pairs
+  // Default: all USDT pairs
   return validPairs.map(t => t.symbol);
 }
 
 function getCategoryDisplayName(cat) {
-  const labels = { usdc: 'USDC Pairs', watchlist: 'Watchlist' };
-  return labels[cat] || 'USDC Pairs';
+  const labels = { usdt: 'USDT Pairs', watchlist: 'Watchlist' };
+  return labels[cat] || 'USDT Pairs';
 }
 
 function setActiveCategory(cat) {
-  if (!['usdc', 'watchlist'].includes(cat)) cat = 'usdc';
+  if (!['usdt', 'watchlist'].includes(cat)) cat = 'usdt';
   state.activeCategory = cat;
   sheetFilter = cat;
   try {
@@ -491,11 +491,11 @@ function setActiveCategory(cat) {
 }
 
 function updateCategoryBadgeUI() {
-  const cat = state.activeCategory || 'usdc';
+  const cat = state.activeCategory || 'usdt';
   const meta = {
-    usdc: { icon: '🪙', label: 'USDC' },
+    usdt: { icon: '🪙', label: 'USDT' },
     watchlist: { icon: '⭐', label: 'WATCH' },
-  }[cat] || { icon: '🪙', label: 'USDC' };
+  }[cat] || { icon: '🪙', label: 'USDT' };
 
   if (dom.quickCatIcon) dom.quickCatIcon.textContent = meta.icon;
   if (dom.quickCatName) dom.quickCatName.textContent = meta.label;
@@ -544,8 +544,8 @@ function switchChartNext() {
     nextSym = list[nextIdx];
   }
 
-  const cat = state.activeCategory || 'usdc';
-  const icons = { usdc: '🪙', watchlist: '⭐' };
+  const cat = state.activeCategory || 'usdt';
+  const icons = { usdt: '🪙', watchlist: '⭐' };
   const icon = icons[cat] || '🪙';
   const t = state.allTickers.find(x => x.symbol === nextSym);
   let chgText = '';
@@ -572,8 +572,8 @@ function switchChartPrev() {
     prevSym = list[prevIdx];
   }
 
-  const cat = state.activeCategory || 'usdc';
-  const icons = { usdc: '🪙', watchlist: '⭐' };
+  const cat = state.activeCategory || 'usdt';
+  const icons = { usdt: '🪙', watchlist: '⭐' };
   const icon = icons[cat] || '🪙';
   const t = state.allTickers.find(x => x.symbol === prevSym);
   let chgText = '';
@@ -688,7 +688,7 @@ function setTimeframe(intv) {
 }
 
 // Bottom Sheet Rendering: Coins List
-let sheetFilter = state.activeCategory || 'usdc';
+let sheetFilter = state.activeCategory || 'usdt';
 function renderSheetCoins() {
   if (!dom.sheetCoinList) return;
   const q = dom.coinSearchInput.value.trim().toUpperCase();
@@ -704,7 +704,7 @@ function renderSheetCoins() {
   }
 
   if (list.length === 0) {
-    dom.sheetCoinList.innerHTML = `<div style="padding:32px 16px;text-align:center;color:var(--text-muted);font-size:13px;">No matching USDC pairs found</div>`;
+    dom.sheetCoinList.innerHTML = `<div style="padding:32px 16px;text-align:center;color:var(--text-muted);font-size:13px;">No matching USDT pairs found</div>`;
     return;
   }
 
@@ -789,10 +789,10 @@ function handlePairInput() {
   let raw = (dom.coinSearchInput.value || '').trim().toUpperCase();
   if (!raw) return;
 
-  // Auto-complete USDC if omitted
+  // Auto-complete USDT if omitted
   let candidate = raw;
-  if (!candidate.endsWith('USDC') && !candidate.endsWith('USDT') && !candidate.endsWith('BUSD')) {
-    candidate = candidate + 'USDC';
+  if (!candidate.endsWith('USDT') && !candidate.endsWith('USDC') && !candidate.endsWith('BUSD')) {
+    candidate = candidate + 'USDT';
   }
 
   // 1. Direct match in allTickers
@@ -809,7 +809,7 @@ function handlePairInput() {
     return;
   }
 
-  // 3. Substring match (e.g. PEPE -> 1000PEPEUSDC, BONK -> 1000BONKUSDC)
+  // 3. Substring match (e.g. PEPE -> 1000PEPEUSDT, BONK -> 1000BONKUSDT)
   const cleanRaw = raw.replace('USDC', '').replace('USDT', '').replace('BUSD', '');
   const sub = state.allTickers.find(t => t.symbol.includes(cleanRaw));
   if (sub) {

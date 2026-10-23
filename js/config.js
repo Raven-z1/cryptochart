@@ -6,13 +6,13 @@ var CONFIG = {
   restBase: 'https://fapi.binance.com',
   wsBase: 'wss://fstream.binance.com/market/ws',
   wsStreamBase: 'wss://fstream.binance.com/market/stream',
-  defaultSymbol: 'BTCUSDC',
+  defaultSymbol: 'BTCUSDT',
   defaultInterval: '5m',
   intervals: ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d', '3d', '1w', '1M'],
   candleLimit: 500,
   defaultWatchlist: [
-    'BTCUSDC', 'ETHUSDC', 'SOLUSDC', 'BNBUSDC', 'XRPUSDC',
-    'DOGEUSDC', '1000PEPEUSDC', 'SUIUSDC', 'AVAXUSDC', 'LINKUSDC', 'NEARUSDC', 'ADAUSDC'
+    'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT',
+    'DOGEUSDT', '1000PEPEUSDT', 'SUIUSDT', 'AVAXUSDT', 'LINKUSDT', 'NEARUSDT', 'ADAUSDT'
   ],
 };
 
@@ -29,9 +29,9 @@ var state = {
   activeCategory: (function () {
     try {
       const s = localStorage.getItem('cc_active_category');
-      if (['usdc', 'watchlist'].includes(s)) return s;
+      if (['usdt', 'watchlist'].includes(s)) return s;
     } catch (_) {}
-    return 'usdc';
+    return 'usdt';
   })(),
   chartStyle: (function () {
     try {
@@ -51,7 +51,11 @@ var state = {
   watchlist: (function () {
     try {
       const w = JSON.parse(localStorage.getItem('cc_watchlist'));
-      if (Array.isArray(w) && w.length > 0) return w;
+      if (Array.isArray(w)) {
+        // Drop stale entries from other quote assets (e.g. legacy USDC pairs)
+        const usdtOnly = w.filter(s => typeof s === 'string' && s.endsWith('USDT'));
+        if (usdtOnly.length > 0) return usdtOnly;
+      }
     } catch (_) {}
     return [...CONFIG.defaultWatchlist];
   })(),
@@ -95,7 +99,7 @@ var state = {
     totalBalance: null,
   },
   orderForm: {
-    type: 'LIMIT',
+    type: 'MARKET',
     leverage: 10,
     riskPct: 5,
   },
@@ -300,9 +304,6 @@ var dom = {
   confirmSym: document.getElementById('confirm-sym'),
   confirmCurrPrice: document.getElementById('confirm-curr-price'),
   btnOrderTypeMarket: document.getElementById('btn-ordertype-market'),
-  btnOrderTypeLimit: document.getElementById('btn-ordertype-limit'),
-  confirmLimitPriceGroup: document.getElementById('confirm-limit-price-group'),
-  confirmLimitPrice: document.getElementById('confirm-limit-price'),
   confirmRiskSubtext: document.getElementById('confirm-risk-subtext'),
   confirmAvailBal: document.getElementById('confirm-avail-bal'),
   confirmSizeUsdt: document.getElementById('confirm-size-usdt'),

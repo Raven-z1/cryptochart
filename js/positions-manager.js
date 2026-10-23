@@ -72,7 +72,7 @@ function renderPositionCardHtml(pos) {
           <span class="pos-grid-val pos-val-mark">$${formatPrice(markPrice, sym)}</span>
         </div>
         <div class="pos-grid-cell">
-          <span class="pos-grid-lbl">Margin (USDC)</span>
+          <span class="pos-grid-lbl">Margin (USDT)</span>
           <span class="pos-grid-val pos-val-margin">$${margin.toFixed(2)}</span>
         </div>
         <div class="pos-grid-cell">
@@ -399,33 +399,16 @@ async function loadPositionsAndBalance(options = {}) {
       binanceSignedRequest('/fapi/v2/balance', 'GET').catch(() => null),
     ]);
 
-    // Account Balance Overview: Prioritize USDC balances over USDT
-    const usdcAsset = Array.isArray(accountData?.assets) ? accountData.assets.find(a => a.asset === 'USDC') : null;
-    const usdcBal = Array.isArray(balanceData) ? balanceData.find(b => b.asset === 'USDC') : null;
-
+    // Account Balance Overview: USDT is the quote asset for all traded pairs
     const usdtAsset = Array.isArray(accountData?.assets) ? accountData.assets.find(a => a.asset === 'USDT') : null;
     const usdtBal = Array.isArray(balanceData) ? balanceData.find(b => b.asset === 'USDT') : null;
 
-    // Extract USDC amounts
-    const usdcWallet = parseFloat(usdcAsset?.walletBalance || usdcBal?.balance || usdcBal?.crossWalletBalance || 0);
-    const usdcAvail = parseFloat(usdcAsset?.availableBalance || usdcBal?.availableBalance || usdcBal?.maxWithdrawAmount || usdcWallet);
-    const usdcUnrealized = parseFloat(usdcAsset?.unrealizedProfit || usdcBal?.crossUnPnl || 0);
-    const usdcMargin = parseFloat(usdcAsset?.marginBalance || (usdcWallet + usdcUnrealized));
-
-    // Extract USDT amounts as fallback
-    const usdtWallet = parseFloat(usdtAsset?.walletBalance || usdtBal?.balance || usdtBal?.crossWalletBalance || accountData?.totalWalletBalance || 0);
-    const usdtAvail = parseFloat(usdtAsset?.availableBalance || usdtBal?.availableBalance || usdtBal?.maxWithdrawAmount || accountData?.availableBalance || usdtWallet);
-    const usdtUnrealized = parseFloat(usdtAsset?.unrealizedProfit || usdtBal?.crossUnPnl || accountData?.totalUnrealizedProfit || 0);
-    const usdtMargin = parseFloat(usdtAsset?.marginBalance || accountData?.totalMarginBalance || (usdtWallet + usdtUnrealized));
-
-    // Determine target asset: Prioritize USDC if available or if USDT is 0
-    const hasUsdc = usdcWallet > 0 || usdcAvail > 0 || (usdcAsset && usdtWallet <= 0);
-    const activeAsset = (hasUsdc || usdtWallet <= 0) ? 'USDC' : 'USDT';
-
-    const walletBalance = activeAsset === 'USDC' ? usdcWallet : usdtWallet;
-    const marginBalance = activeAsset === 'USDC' ? usdcMargin : usdtMargin;
-    const unrealizedProfit = activeAsset === 'USDC' ? usdcUnrealized : usdtUnrealized;
-    const availableBalance = activeAsset === 'USDC' ? usdcAvail : usdtAvail;
+    // Extract USDT amounts
+    const walletBalance = parseFloat(usdtAsset?.walletBalance || usdtBal?.balance || usdtBal?.crossWalletBalance || accountData?.totalWalletBalance || 0);
+    const availableBalance = parseFloat(usdtAsset?.availableBalance || usdtBal?.availableBalance || usdtBal?.maxWithdrawAmount || accountData?.availableBalance || walletBalance);
+    const unrealizedProfit = parseFloat(usdtAsset?.unrealizedProfit || usdtBal?.crossUnPnl || accountData?.totalUnrealizedProfit || 0);
+    const marginBalance = parseFloat(usdtAsset?.marginBalance || accountData?.totalMarginBalance || (walletBalance + unrealizedProfit));
+    const activeAsset = 'USDT';
 
     posLiveState.walletBalance = walletBalance;
     posLiveState.marginBalance = marginBalance;

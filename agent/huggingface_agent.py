@@ -26,7 +26,7 @@ DEFAULT_MODEL = "openai/gpt-oss-120b"
 BINANCE_FAPI_BASE = "https://fapi.binance.com"
 
 
-def fetch_klines(symbol="BTCUSDC", interval="5m", limit=50):
+def fetch_klines(symbol="BTCUSDT", interval="5m", limit=50):
     url = f"{BINANCE_FAPI_BASE}/fapi/v1/klines?symbol={symbol.upper()}&interval={interval}&limit={limit}"
     req = urllib.request.Request(url, headers={"User-Agent": "CryptoChart-AIAgent/1.0"})
     with urllib.request.urlopen(req, timeout=10) as resp:
@@ -46,7 +46,7 @@ def fetch_klines(symbol="BTCUSDC", interval="5m", limit=50):
     return candles
 
 
-def fetch_24h_ticker(symbol="BTCUSDC"):
+def fetch_24h_ticker(symbol="BTCUSDT"):
     url = f"{BINANCE_FAPI_BASE}/fapi/v1/ticker/24hr?symbol={symbol.upper()}"
     req = urllib.request.Request(url, headers={"User-Agent": "CryptoChart-AIAgent/1.0"})
     with urllib.request.urlopen(req, timeout=10) as resp:
@@ -107,7 +107,7 @@ def call_huggingface(api_key, model, system_prompt, user_prompt, base_url=DEFAUL
 
 def main():
     parser = argparse.ArgumentParser(description="Hugging Face Autonomous Crypto AI Agent")
-    parser.add_argument("--symbol", default="BTCUSDC", help="Trading symbol (e.g. BTCUSDC, ETHUSDC)")
+    parser.add_argument("--symbol", default="BTCUSDT", help="Trading symbol (e.g. BTCUSDT, ETHUSDT)")
     parser.add_argument("--timeframe", default="5m", help="Candle interval (e.g. 5m, 15m, 1h)")
     parser.add_argument("--direction", default="auto", choices=["long", "short", "auto"], help="Setup bias")
     parser.add_argument("--strategy", default="scalp", help="Strategy (scalp, breakout, orderblock, pullback)")

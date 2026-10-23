@@ -54,11 +54,11 @@ dom.togHa.addEventListener('change', e => {
   showToast(e.target.checked ? 'Heikin-Ashi Enabled' : 'Candlestick Enabled');
 });
 
-// Header Category Tag click listener (cycle category USDC -> Watchlist)
+// Header Category Tag click listener (cycle category USDT -> Watchlist)
 if (dom.headCatTag) {
   dom.headCatTag.addEventListener('click', () => {
     haptic(15);
-    const order = ['usdc', 'watchlist'];
+    const order = ['usdt', 'watchlist'];
     const curIdx = order.indexOf(state.activeCategory);
     const nextCat = order[(curIdx + 1) % order.length];
     setActiveCategory(nextCat);
