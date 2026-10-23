@@ -181,6 +181,47 @@
   max-height: 52vh;
 }
 
+/* 1h ranking loader: covers the whole sheet so rows cannot be tapped mid-sort */
+#market-sheet {
+  position: relative;
+}
+
+.coin-rank-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(11, 14, 17, 0.94);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  touch-action: none;
+}
+
+.coin-rank-overlay.show {
+  display: flex;
+}
+
+.coin-rank-text {
+  color: var(--text-main);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.coin-rank-sub {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
 .coin-row {
   display: flex;
   align-items: center;

@@ -50,17 +50,33 @@ async function load24hTickers() {
 // For each symbol, read the last CLOSED 1h candle and compute its percent change
 // (close vs open). The symbol list is then sorted by absolute value, biggest first.
 let h1ChangesInFlight = false;
-let h1ResortTimer = null;
+let h1RankDone = 0;
+let h1RankTotal = 0;
+let h1ProgressTimer = null;
 
-// Throttled re-render so the open list re-ranks as 1h data arrives
-function scheduleHourlyResort() {
-  if (h1ResortTimer) return;
-  h1ResortTimer = setTimeout(() => {
-    h1ResortTimer = null;
-    if (dom.marketBackdrop && dom.marketBackdrop.classList.contains('open')) {
-      renderSheetCoins();
+// Full-sheet loading state shown while the list is being sorted.
+// It covers the sheet body, so no row can be tapped mid-sort.
+function showHourlyRankOverlay(show) {
+  if (!dom.coinRankOverlay) return;
+  dom.coinRankOverlay.classList.toggle('show', !!show);
+  if (show) updateHourlyRankProgress();
+}
+
+function syncHourlyRankOverlay() {
+  if (!dom.coinRankOverlay) return;
+  dom.coinRankOverlay.classList.toggle('show', h1ChangesInFlight);
+  if (h1ChangesInFlight) updateHourlyRankProgress();
+}
+
+function updateHourlyRankProgress() {
+  if (!dom.coinRankSub) return;
+  if (h1ProgressTimer) return;
+  h1ProgressTimer = setTimeout(() => {
+    h1ProgressTimer = null;
+    if (h1RankTotal > 0) {
+      dom.coinRankSub.textContent = `${h1RankDone} / ${h1RankTotal} pairs ranked`;
     }
-  }, 1200);
+  }, 400);
 }
 
 function getServerNow() {
@@ -111,9 +127,11 @@ async function loadHourlyChanges() {
   if (fresh || h1ChangesInFlight) return;
 
   h1ChangesInFlight = true;
+  h1RankDone = 0;
+  h1RankTotal = symbols.length;
   const results = {};
-  // Publish the map right away so rows can re-rank while data streams in
   state.h1Change = results;
+  showHourlyRankOverlay(true);
 
   // Fetch in batches so a big symbol list does not hammer the REST endpoint
   const fetchBatch = async (symList, laneCount) => {
@@ -124,7 +142,8 @@ async function loadHourlyChanges() {
         const pct = await fetchHourlyMove(sym);
         if (pct !== null && Number.isFinite(pct)) {
           results[sym] = pct;
-          scheduleHourlyResort();
+          h1RankDone++;
+          updateHourlyRankProgress();
         }
       }
     };
@@ -145,6 +164,10 @@ async function loadHourlyChanges() {
   }
 
   renderSheetCoins();
+  if (dom.coinRankSub && h1RankTotal > 0) {
+    dom.coinRankSub.textContent = `${h1RankDone} / ${h1RankTotal} pairs ranked`;
+  }
+  showHourlyRankOverlay(false);
 }
 
 // 24h Price Lines on Chart
@@ -832,6 +855,8 @@ function renderSheetCoins() {
 function openSheet(backdrop) {
   haptic(15);
   backdrop.classList.add('open');
+  // Re-opening the coin sheet mid-rank keeps the loading state visible
+  if (backdrop === dom.marketBackdrop) syncHourlyRankOverlay();
 }
 
 function closeAllSheets() {

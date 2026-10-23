@@ -211,6 +211,9 @@ var dom = {
   pairInputForm: document.getElementById('pair-input-form'),
   pairGoBtn: document.getElementById('pair-go-btn'),
   sheetCoinList: document.getElementById('sheet-coin-list'),
+  coinRankOverlay: document.getElementById('coin-rank-overlay'),
+  coinRankText: document.getElementById('coin-rank-text'),
+  coinRankSub: document.getElementById('coin-rank-sub'),
   indBackdrop: document.getElementById('ind-sheet-backdrop'),
   indCloseBtn: document.getElementById('ind-sheet-close'),
   // Legend
